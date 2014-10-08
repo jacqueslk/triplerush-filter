@@ -63,7 +63,7 @@ trait Forwarding[State] extends IndexVertex[State] {
       val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
       println("---- Forwarding::" + expose.toList(3) + "----") // #
       def sendTo(childDelta: Int) {
-//        if (!DictionaryVertex.checkFilter) {
+//        ...
 //          if (extras > 0) {
 //            graphEditor.sendSignal(aboveAverageTicketQuery, EfficientIndexPattern(0, 0, 3))
 //            extras -= 1
