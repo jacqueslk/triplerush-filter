@@ -26,11 +26,11 @@ final class DictionaryVertex extends IndexVertex(10) {
   }
 
   override def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    checkAndForward(query, graphEditor)
+    // Nothing to do here
   }
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    // Nothing here.
+    checkAndForward(query, graphEditor)
   }
   
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
@@ -41,8 +41,8 @@ final class DictionaryVertex extends IndexVertex(10) {
       val s = query(query.size-3)
       val p = query(query.size-2)
       val o = query(query.size-1)
-      val destination = TriplePattern(s, p, o).routingAddress
-      val filterResponse = FilterResponse(query)
+      val destination = TriplePattern(s, p, o).toEfficientIndexPattern
+      val filterResponse = FilterResponse(query.dropRight(3))
       
       val eip = new EfficientIndexPattern(destination).toTriplePattern // DEBUG INFO
       println("Passed filter; sending to " + destination + "(= " + eip + ")")
@@ -51,7 +51,7 @@ final class DictionaryVertex extends IndexVertex(10) {
     }
     else {
       println("Did not pass filter...")
-      graphEditor.sendSignal(query, 0) // Send back to query ??
+      graphEditor.sendSignal(query, 0) // Send back to query ?? // TODO
     }
   }
   

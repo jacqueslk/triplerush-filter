@@ -108,11 +108,15 @@ trait Forwarding[State] extends IndexVertex[State] {
       val sendToDictionary = TrGlobal.useDict // TODO determine when there's a filter check
       
       if (sendToDictionary) {
-        println("checkDictionary: to dictionary_id; query = " + query.mkString(", "))
-        graphEditor.sendSignal(query, DICTIONARY_ID)
+        // TODO -----------------------
+        // Embed Long into two Int fields probably better :3
+        val indexInfo = new EfficientIndexPattern(id)
+        val queryWithAddr = query :+ indexInfo.s :+ indexInfo.p :+ indexInfo.o
+        println("checkDictionary: with addr to dictionary. query = " + query.mkString(", "))
+        graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
       }
       else {
-        println("checkDictionary: processQuery; query = " + query.mkString(", "))
+        println("checkDictionary: go to processQuery; query = " + query.mkString(", "))
         processQuery(query, graphEditor)
       }
       
