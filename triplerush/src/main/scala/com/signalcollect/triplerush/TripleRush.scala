@@ -59,6 +59,7 @@ import com.signalcollect.triplerush.loading.NtriplesLoader
  */
 object TrGlobal {
   var dictionary: Option[Dictionary] = None
+  var useDict = false // TEMP so pre-query operations don't go through the dictionaryVertex for now
 }
 
 case class TripleRush(
@@ -132,6 +133,7 @@ case class TripleRush(
   implicit val executionContext = system.dispatcher
   graph.addVertex(new RootIndex)
   graph.addVertex(new DictionaryVertex)
+  
   var optimizer: Option[Optimizer] = None
 
   def prepareExecution {
@@ -270,6 +272,7 @@ case class TripleRush(
     graph.reset
     graph.awaitIdle
     graph.addVertex(new RootIndex)
+    graph.addVertex(new DictionaryVertex)
   }
 
   def clearCaches {

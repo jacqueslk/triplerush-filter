@@ -22,9 +22,12 @@ package com.signalcollect.triplerush.vertices
 import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.EfficientIndexPattern
+import com.signalcollect.triplerush.FilterRequest
 import com.signalcollect.triplerush.QueryIds
 
 trait Forwarding[State] extends IndexVertex[State] {
+  
+  val DICTIONARY_ID = 10
 
   override def targetIds: Traversable[Long] = {
     new Traversable[Long] {
@@ -61,21 +64,12 @@ trait Forwarding[State] extends IndexVertex[State] {
       var extras = absoluteValueOfTotalTickets % edges
       val averageTicketQuery = query.copyWithTickets(avg, complete)
       val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
-      println("---- Forwarding::" + expose.toList(3) + "----") // #
       def sendTo(childDelta: Int) {
-//        ...
-//          if (extras > 0) {
-//            graphEditor.sendSignal(aboveAverageTicketQuery, EfficientIndexPattern(0, 0, 3))
-//            extras -= 1
-//          }
-//          else {
-//            graphEditor.sendSignal(averageTicketQuery, EfficientIndexPattern(0, 0, 3))
-//          }
-//        }
         val routingAddress = nextRoutingAddress(childDelta)
         val eip = new EfficientIndexPattern(routingAddress).toTriplePattern
         println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
         println("Routing address: " + eip + " (child delta: " + childDelta + ")")
+
         if (extras > 0) {
           extras -= 1
           graphEditor.sendSignal(aboveAverageTicketQuery, routingAddress)
@@ -84,6 +78,65 @@ trait Forwarding[State] extends IndexVertex[State] {
         }
       }
       foreachChildDelta(sendTo)
+    }
+  }
+  
+  override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
+    if (!query.isBindingQuery &&
+      query.numberOfPatterns == 1 &&
+      query.isSimpleToBind &&
+      id != EfficientIndexPattern(0, 0, 0) // Cardinality stats for root node are not accurate.  
+      ) {
+      // Take a shortcut and don't actually do the forwarding, just send the cardinality.
+      // The isSimpleToBind check excludes complicated cases, where a binding might fail.
+      val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
+      println("=== ROOT ===")
+      val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
+      println("checkDictionary: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
+      graphEditor.sendSignal(cardinality, queryVertexId)
+      graphEditor.sendSignal(query.tickets, queryVertexId)
+    } else {
+//      val edges = edgeCount
+//      val totalTickets = query.tickets
+//      val absoluteValueOfTotalTickets = if (totalTickets < 0) -totalTickets else totalTickets // inlined math.abs
+//      val avg = absoluteValueOfTotalTickets / edges
+//      val complete = avg > 0 && totalTickets > 0
+//      var extras = absoluteValueOfTotalTickets % edges
+//      val averageTicketQuery = query.copyWithTickets(avg, complete)
+//      val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
+      import com.signalcollect.triplerush.TrGlobal
+      val sendToDictionary = TrGlobal.useDict // TODO determine when there's a filter check
+      
+      if (sendToDictionary) {
+        println("checkDictionary: to dictionary_id; query = " + query.mkString(", "))
+        graphEditor.sendSignal(query, DICTIONARY_ID)
+      }
+      else {
+        println("checkDictionary: processQuery; query = " + query.mkString(", "))
+        processQuery(query, graphEditor)
+      }
+      
+//      def sendTo(childDelta: Int) {
+//        val routingAddress = nextRoutingAddress(childDelta)
+//        val messageDestination = if(sendToDictionary) DICTIONARY_ID else routingAddress
+//        val eip = new EfficientIndexPattern(messageDestination).toTriplePattern
+//        println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
+//        println("Routing address: " + eip + " (child delta: " + childDelta + ")")
+//
+//        if (extras > 0) {
+//          extras -= 1
+//          graphEditor.sendSignal(
+//            if(sendToDictionary) FilterRequest(aboveAverageTicketQuery, routingAddress) else aboveAverageTicketQuery
+//            , messageDestination
+//          )
+//        } else if (avg > 0) {
+//          graphEditor.sendSignal(
+//            if(sendToDictionary) FilterRequest(averageTicketQuery, routingAddress) else averageTicketQuery
+//            , messageDestination
+//          )
+//        }
+//      }
+//      foreachChildDelta(sendTo)
     }
   }
 

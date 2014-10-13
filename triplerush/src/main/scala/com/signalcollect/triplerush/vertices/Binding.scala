@@ -59,6 +59,10 @@ trait Binding
   def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     bindQueryToAllTriples(query, graphEditor)
   }
+  
+  override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
+    processQuery(query, graphEditor) // TODO -------- actual dictionary comm
+  }
 
   def bindQueryToAllTriples(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     if (!query.isBindingQuery &&
@@ -95,13 +99,8 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
-    // =========== #
-    println("---- Binding::" + expose.toList(3) + "----")
-    println("handleQueryBinding: " + query.mkString(", "))
-    // =========== #
+    println("handleQueryBinding: " + query.mkString(", ")) // #
     if (boundParticle != null) {
-      graphEditor.sendSignal(FilterRequest(3, ">", 4, query), Long.MaxValue)
-      // Old:
       routeSuccessfullyBound(boundParticle, graphEditor)
     } else {
       println("Could not bind") // #
