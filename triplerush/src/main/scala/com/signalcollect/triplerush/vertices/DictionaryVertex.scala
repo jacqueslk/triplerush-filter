@@ -57,6 +57,6 @@ final class DictionaryVertex extends IndexVertex(10) {
     }
   }
   
-  def passesFilter: Boolean = true //(random.nextInt() & 1) == 0
+  def passesFilter: Boolean = (random.nextInt() & 1) == 0
   
 }

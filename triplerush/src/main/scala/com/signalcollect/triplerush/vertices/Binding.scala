@@ -32,6 +32,8 @@ import com.signalcollect.triplerush.QueryIds
 trait Binding
   extends IndexVertex[Any]
   with ParentBuilding[Any] {
+  
+  val DICTIONARY_ID = 10
 
   def onEdgeAdded(ge: GraphEditor[Long, Any])
 
@@ -63,11 +65,16 @@ trait Binding
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     val sendToDictionary = TrGlobal.useDict
+    println("checkDictionary: query=" + query.mkString(", "))
     if (sendToDictionary) {
-      
+      val indexInfo = new EfficientIndexPattern(id)
+      val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
+      println("... sending to dictionary")
+      graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
     }
     else {
       processQuery(query, graphEditor)
+      println("... forwarding to processQuery")
     }
   }
 

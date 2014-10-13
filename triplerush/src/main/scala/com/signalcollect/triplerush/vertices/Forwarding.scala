@@ -64,11 +64,11 @@ trait Forwarding[State] extends IndexVertex[State] {
       var extras = absoluteValueOfTotalTickets % edges
       val averageTicketQuery = query.copyWithTickets(avg, complete)
       val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
+      println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
       def sendTo(childDelta: Int) {
         val routingAddress = nextRoutingAddress(childDelta)
         val eip = new EfficientIndexPattern(routingAddress).toTriplePattern
-        println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
-        println("Routing address: " + eip + " (child delta: " + childDelta + ")")
+        println("... Routing address: " + eip + " (child delta: " + childDelta + ")")
 
         if (extras > 0) {
           extras -= 1
@@ -110,11 +110,11 @@ trait Forwarding[State] extends IndexVertex[State] {
       if (sendToDictionary) {
         val indexInfo = new EfficientIndexPattern(id)
         val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
-        println("checkDictionary: with addr to dictionary. query = " + query.mkString(", "))
+        println("checkDictionary: go to dictionary. query = " + queryWithAddr.mkString(", "))
         graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
       }
       else {
-        println("checkDictionary: go to processQuery; query = " + query.mkString(", "))
+        println("checkDictionary: call processQuery; query = " + query.mkString(", "))
         processQuery(query, graphEditor)
       }
       
