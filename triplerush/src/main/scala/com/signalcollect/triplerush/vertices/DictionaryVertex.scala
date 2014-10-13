@@ -38,11 +38,8 @@ final class DictionaryVertex extends IndexVertex(10) {
     println("Query: " + query.mkString(", "))
     
     if (checkFilter) {
-      val s = query(query.size-3)
-      val p = query(query.size-2)
-      val o = query(query.size-1)
-      val destination = TriplePattern(s, p, o).toEfficientIndexPattern
-      val filterResponse = FilterResponse(query.dropRight(3))
+      val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
+      val filterResponse = FilterResponse(query.dropRight(2))
       
       val eip = new EfficientIndexPattern(destination).toTriplePattern // DEBUG INFO
       println("Passed filter; sending to " + destination + "(= " + eip + ")")
