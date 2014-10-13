@@ -7,6 +7,9 @@ import com.signalcollect.triplerush.FilterRequest
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
 import com.signalcollect.triplerush.TriplePattern
+import com.signalcollect.triplerush.QueryIds
+import com.signalcollect.triplerush.QueryParticle
+import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.util.SplayIntSet
 
 final class DictionaryVertex extends IndexVertex(10) {
@@ -34,24 +37,26 @@ final class DictionaryVertex extends IndexVertex(10) {
   }
   
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    println("<<<<< Dictionary Vertex >>>>>")
-    println("Query: " + query.mkString(", "))
+    println(">> This is the Dictionary Vertex <<")
     
-    if (checkFilter) {
+    if (passesFilter) {
       val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
       val filterResponse = FilterResponse(query.dropRight(2))
       
-      val eip = new EfficientIndexPattern(destination).toTriplePattern // DEBUG INFO
-      println("Passed filter; sending to " + destination + "(= " + eip + ")")
+      val eip = new EfficientIndexPattern(destination).toTriplePattern
+      println("Passed filter; sending to " + destination + " (= " + eip + ")")
       
       graphEditor.sendSignal(filterResponse, destination) 
     }
     else {
       println("Did not pass filter...")
-      graphEditor.sendSignal(query, 0) // Send back to query ?? // TODO
+      val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
+      print("Sending back " + query.tickets + " to query vertex ID " + queryVertexId)
+      println(" (=" + new EfficientIndexPattern(queryVertexId).toTriplePattern + ")")
+      graphEditor.sendSignal(query.tickets, queryVertexId) // Send back tickets to query particle
     }
   }
   
-  def checkFilter: Boolean = true //(random.nextInt() & 1) == 0
+  def passesFilter: Boolean = true //(random.nextInt() & 1) == 0
   
 }

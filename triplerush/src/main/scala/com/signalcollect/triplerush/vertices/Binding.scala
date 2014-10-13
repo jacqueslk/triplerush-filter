@@ -25,6 +25,7 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.EfficientIndexPattern // <-- DEBUG Lucas #
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
 import com.signalcollect.triplerush.FilterRequest
+import com.signalcollect.triplerush.TrGlobal
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
 
@@ -61,7 +62,13 @@ trait Binding
   }
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    processQuery(query, graphEditor) // TODO -------- actual dictionary comm
+    val sendToDictionary = TrGlobal.useDict
+    if (sendToDictionary) {
+      
+    }
+    else {
+      processQuery(query, graphEditor)
+    }
   }
 
   def bindQueryToAllTriples(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
@@ -103,7 +110,7 @@ trait Binding
     if (boundParticle != null) {
       routeSuccessfullyBound(boundParticle, graphEditor)
     } else {
-      println("Could not bind") // #
+      println("Could not bind")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
