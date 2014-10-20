@@ -22,13 +22,18 @@ package com.signalcollect.triplerush.vertices
 
 import com.signalcollect.Edge
 import com.signalcollect.GraphEditor
+import com.signalcollect.triplerush.EfficientIndexPattern // <-- DEBUG Lucas #
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
+import com.signalcollect.triplerush.FilterRequest
+import com.signalcollect.triplerush.TrGlobal
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
 
 trait Binding
   extends IndexVertex[Any]
   with ParentBuilding[Any] {
+  
+  val DICTIONARY_ID = 10
 
   def onEdgeAdded(ge: GraphEditor[Long, Any])
 
@@ -56,6 +61,21 @@ trait Binding
 
   def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     bindQueryToAllTriples(query, graphEditor)
+  }
+  
+  override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
+    val sendToDictionary = TrGlobal.useDict
+    println("checkDictionary: query=" + query.mkString(", "))
+    if (sendToDictionary) {
+      val indexInfo = new EfficientIndexPattern(id)
+      val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
+      println("... sending to dictionary")
+      graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
+    }
+    else {
+      processQuery(query, graphEditor)
+      println("... forwarding to processQuery")
+    }
   }
 
   def bindQueryToAllTriples(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
@@ -93,9 +113,11 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
+    println("handleQueryBinding: " + query.mkString(", ")) // #
     if (boundParticle != null) {
       routeSuccessfullyBound(boundParticle, graphEditor)
     } else {
+      println("Could not bind")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
@@ -106,7 +128,10 @@ trait Binding
     boundParticle: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
 
+    println("routeSuccessfullyBound: boundParticle=" + boundParticle.mkString(", "))
+    
     if (boundParticle.isResult) {
+      println("boundParticle.isResult == true")
       // Query successful, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
       if (boundParticle.isBindingQuery) {
@@ -115,7 +140,12 @@ trait Binding
         graphEditor.sendSignal(1, queryVertexId)
         graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
       }
+      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
+      println("Send tickets to " + queryVertexId + s" (= $eip)")
     } else {
+      println("boundParticle.isResult not true;")
+      val eip = new EfficientIndexPattern(boundParticle.routingAddress).toTriplePattern
+      println("Sending boundParticle to " + boundParticle.routingAddress + s" (= $eip)")
       graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
     }
   }

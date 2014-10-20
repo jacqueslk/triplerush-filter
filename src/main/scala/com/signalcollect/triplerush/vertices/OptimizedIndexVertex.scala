@@ -76,7 +76,7 @@ abstract class OptimizedIndexVertex(
   @inline def foreachChildDelta(f: Int => Unit) = {
     state match {
       case i: Int =>
-        f(i) // No check for 0, as an index vertex always needs to have at elast one child delta set at this point.
+        f(i) // No check for 0, as an index vertex always needs to have at least one child delta set at this point.
       case a: Array[Byte] =>
         new FastInsertIntSet(a).foreach(f)
       case s: SplayIntSet =>

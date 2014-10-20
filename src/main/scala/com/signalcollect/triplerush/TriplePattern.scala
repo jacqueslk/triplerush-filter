@@ -52,11 +52,11 @@ object EfficientIndexPattern {
       val second = if (o != 0) {
         o
       } else {
-        p | Int.MinValue
+        p | Int.MinValue // make sure that p is negative
       }
       embed2IntsInALong(first, second)
     } else {
-      val first = p | Int.MinValue
+      val first = p | Int.MinValue // make sure that p is negative
       val second = o
       embed2IntsInALong(first, second)
     }
@@ -103,6 +103,7 @@ class EfficientIndexPattern(val id: Long) extends AnyVal {
     }
   }
 
+  // Long (containing two int) to int conversion
   @inline def extractFirst = id.toInt
 
   @inline def extractSecond = (id >> 32).toInt
@@ -114,7 +115,7 @@ class EfficientIndexPattern(val id: Long) extends AnyVal {
   @inline def p = {
     val first = extractFirst
     if (first < 0) {
-      first & Int.MaxValue
+      first & Int.MaxValue // make sure first is positive
     } else {
       if (id < 0) { // second < 0
         extractSecond & Int.MaxValue
@@ -158,6 +159,7 @@ case class TriplePattern(s: Int, p: Int, o: Int) {
     (sOpt :: pOpt :: oOpt :: Nil).flatten
   }
 
+  // Return set of all fields that are < 0, i.e. variables
   def variableSet: Set[Int] = {
     if (s < 0) {
       if (p < 0) {

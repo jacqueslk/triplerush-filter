@@ -124,6 +124,10 @@ object Sparql {
    *  If the query might have results returns Some(Sparql), else returns None.
    */
   def apply(query: String)(implicit tr: TripleRush): Option[Sparql] = {
+    println("Sparql: def apply")
+    import com.signalcollect.triplerush.TrGlobal
+    TrGlobal.useDict = true
+    
     val d = tr.dictionary
     val parsed: ParsedSparqlQuery = SparqlParser.parse(query)
     var containsEntryThatIsNotInDictionary = false

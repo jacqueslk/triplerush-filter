@@ -25,6 +25,8 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.CardinalityReply
 import com.signalcollect.triplerush.CardinalityRequest
 import com.signalcollect.triplerush.ChildIdRequest
+import com.signalcollect.triplerush.FilterResponse
+import com.signalcollect.triplerush.FilterRequest
 import com.signalcollect.triplerush.ObjectCountSignal
 import com.signalcollect.triplerush.PlaceholderEdge
 import com.signalcollect.triplerush.SubjectCountSignal
@@ -54,6 +56,8 @@ abstract class IndexVertex[State](val id: Long)
   def addChildDelta(delta: Int): Boolean
 
   def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any])
+  
+  def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any])
 
   def handleCardinalityIncrement(i: Int) = {}
 
@@ -67,6 +71,8 @@ abstract class IndexVertex[State](val id: Long)
    * Default reply, is only overridden by SOIndex.
    */
   def handleCardinalityRequest(c: CardinalityRequest, graphEditor: GraphEditor[Long, Any]) {
+    println("handleCardinalityRequest: sending " + CardinalityReply(
+      c.forPattern, cardinality) + " to " + c.requestor)
     graphEditor.sendSignal(CardinalityReply(
       c.forPattern, cardinality), c.requestor)
   }
@@ -79,19 +85,35 @@ abstract class IndexVertex[State](val id: Long)
 
   def handleChildIdRequest(requestor: Long, graphEditor: GraphEditor[Long, Any])
 
+
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
     signal match {
       case query: Array[Int] =>
-        processQuery(query, graphEditor)
+        println("\n==== IndexVertex::" + expose.toList(3) + "=====")
+        println("Deliver Signal Array[Int]: " + query.mkString(", "))
+        checkDictionary(query, graphEditor)
+      case filter: FilterRequest =>
+        println("\n==== IndexVertex::" + expose.toList(3) + "=====")
+        println("Deliver Signal FilterRequest: " + filter.query.mkString(", "))
+        processQuery(filter.query, graphEditor)
+      case response: FilterResponse =>
+        println("\n==== IndexVertex::" + expose.toList(3) + "=====")
+        println("Deliver Signal FilterResponse: " + response.query.mkString(", "))
+        processQuery(response.query, graphEditor)
       case cr: CardinalityRequest =>
+        println("Cardinality Request: " + cr)
         handleCardinalityRequest(cr, graphEditor)
       case ChildIdRequest(requestor) =>
+        println("ChildIdRequest: " + requestor)
         handleChildIdRequest(requestor, graphEditor)
       case cardinalityIncrement: Int =>
+        println("cardinalityIncrement: " + cardinalityIncrement)
         handleCardinalityIncrement(cardinalityIncrement)
       case count: ObjectCountSignal =>
+        println("objectCountSignal: " + count)
         handleObjectCount(count)
       case count: SubjectCountSignal =>
+        println("subjectCountSignal: " + count)
         handleSubjectCount(count)
       case other => throw new Exception(s"Unexpected signal @ $id: $other")
     }

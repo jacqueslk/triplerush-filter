@@ -35,6 +35,7 @@ import com.signalcollect.triplerush.loading.FileLoader
 import com.signalcollect.triplerush.optimizers.GreedyCardinalityOptimizer
 import com.signalcollect.triplerush.optimizers.Optimizer
 import com.signalcollect.triplerush.vertices.RootIndex
+import com.signalcollect.triplerush.vertices.DictionaryVertex
 import com.signalcollect.triplerush.vertices.query.IndexQueryVertex
 import com.signalcollect.triplerush.vertices.query.ResultBindingQueryVertex
 import com.signalcollect.triplerush.vertices.query.ResultCountingQueryVertex
@@ -58,6 +59,7 @@ import com.signalcollect.triplerush.loading.NtriplesLoader
  */
 object TrGlobal {
   var dictionary: Option[Dictionary] = None
+  var useDict = false // TEMP so pre-query operations don't go through the dictionaryVertex for now
 }
 
 case class TripleRush(
@@ -90,6 +92,7 @@ case class TripleRush(
       withEagerIdleDetection(false).
       withKryoRegistrations(List(
         "com.signalcollect.triplerush.vertices.RootIndex",
+        "com.signalcollect.triplerush.vertices.DictionaryVertex", // <--- Lucas
         "com.signalcollect.triplerush.vertices.SIndex",
         "com.signalcollect.triplerush.vertices.PIndex",
         "com.signalcollect.triplerush.vertices.OIndex",
@@ -129,11 +132,13 @@ case class TripleRush(
   val system = ActorSystemRegistry.retrieve("SignalCollect").get
   implicit val executionContext = system.dispatcher
   graph.addVertex(new RootIndex)
+  graph.addVertex(new DictionaryVertex)
+  
   var optimizer: Option[Optimizer] = None
 
   def prepareExecution {
     graph.awaitIdle
-    graph.execute(ExecutionConfiguration().withExecutionMode(ExecutionMode.ContinuousAsynchronous))
+    graph.execute(ExecutionConfiguration.withExecutionMode(ExecutionMode.ContinuousAsynchronous))
     graph.awaitIdle
     canExecute = true
     optimizer = optimizerCreator(this)
@@ -267,6 +272,7 @@ case class TripleRush(
     graph.reset
     graph.awaitIdle
     graph.addVertex(new RootIndex)
+    graph.addVertex(new DictionaryVertex)
   }
 
   def clearCaches {
