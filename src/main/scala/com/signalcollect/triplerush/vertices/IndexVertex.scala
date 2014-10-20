@@ -71,8 +71,7 @@ abstract class IndexVertex[State](val id: Long)
    * Default reply, is only overridden by SOIndex.
    */
   def handleCardinalityRequest(c: CardinalityRequest, graphEditor: GraphEditor[Long, Any]) {
-    println("handleCardinalityRequest: sending " + CardinalityReply(
-      c.forPattern, cardinality) + " to " + c.requestor)
+    println(s"handleCardinalityRequest: answer is $cardinality")
     graphEditor.sendSignal(CardinalityReply(
       c.forPattern, cardinality), c.requestor)
   }
@@ -94,15 +93,16 @@ abstract class IndexVertex[State](val id: Long)
     val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
     println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
     // End output code ----------
+    
     signal match {
       case query: Array[Int] =>
-        println("Deliver Signal Array[Int]: " + query.mkString(", "))
+        println("Deliver Array[Int]: " + query.mkString(", "))
         checkDictionary(query, graphEditor)
       case filter: FilterRequest =>
-        println("Deliver Signal FilterRequest: " + filter.query.mkString(", "))
+        println("Deliver FilterRequest: " + filter.query.mkString(", "))
         processQuery(filter.query, graphEditor)
       case response: FilterResponse =>
-        println("Deliver Signal FilterResponse: " + response.query.mkString(", "))
+        println("Deliver FilterResponse: " + response.query.mkString(", "))
         processQuery(response.query, graphEditor)
       case cr: CardinalityRequest =>
         val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern

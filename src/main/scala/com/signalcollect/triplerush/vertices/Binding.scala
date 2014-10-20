@@ -85,6 +85,7 @@ trait Binding
       // Take a shortcut and don't actually do the binding, just send the result count.
       // The isSimpleToBind check excludes complicated cases, where a binding might fail.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
+      println(s"Send edge count = $edgeCount to query vertex ID")
       graphEditor.sendSignal(edgeCount, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {

@@ -20,15 +20,15 @@ class OptimizerTestSimpleExtended extends FlatSpec with Checkers with TestAnnoun
       tr.addTriple("http://D", "http://p", "http://F")
       tr.addTriple("http://E", "http://p", "http://B")
       tr.addTriple("http://F", "http://p", "http://D")
-      tr.addTriple("http://G", "http://p", "http://H")
       tr.addTriple("http://G", "http://p", "http://B")
       tr.addTriple("http://G", "http://p", "http://F")
+      tr.addTriple("http://G", "http://p", "http://H")
       tr.addTriple("http://H", "http://p", "http://A")
       tr.addTriple("http://I", "http://p", "http://A")
       
       tr.addTriple("http://A", "http://q", "http://I")
-      tr.addTriple("http://B", "http://q", "http://G")
       tr.addTriple("http://B", "http://q", "http://E")
+      tr.addTriple("http://B", "http://q", "http://G")
       tr.addTriple("http://C", "http://q", "http://D")
       tr.addTriple("http://D", "http://q", "http://E")
       tr.addTriple("http://E", "http://q", "http://C")
@@ -51,10 +51,10 @@ class OptimizerTestSimpleExtended extends FlatSpec with Checkers with TestAnnoun
       println("!!!!!!!!!!! END PREPARE EXECUTION\r================================\r\r\r\r")
       
       val queryString = """
-        SELECT ?T ?A ?B
+        SELECT ?A ?B
       	WHERE {
-		  <http://A> <http://p> ?A .
-		  ?A ?B ?T
+		  ?A <http://q> ?B .
+		  ?B <http://q> ?A
       }"""
       
       val query = Sparql(queryString).get
