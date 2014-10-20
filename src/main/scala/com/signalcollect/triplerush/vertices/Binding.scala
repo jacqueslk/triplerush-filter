@@ -64,8 +64,8 @@ trait Binding
   }
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    val sendToDictionary = TrGlobal.useDict
-    println("checkDictionary: query=" + query.mkString(", "))
+    val sendToDictionary = TrGlobal.useDict && false  // <!!!!!!!!!
+    //println("checkDictionary: query=" + query.mkString(", "))
     if (sendToDictionary) {
       val indexInfo = new EfficientIndexPattern(id)
       val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
@@ -74,7 +74,7 @@ trait Binding
     }
     else {
       processQuery(query, graphEditor)
-      println("... forwarding to processQuery")
+      //println("... forwarding to processQuery")
     }
   }
 
@@ -113,7 +113,7 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
-    println("handleQueryBinding: " + query.mkString(", ")) // #
+    println("handleQueryBinding: " + query.mkString(", ") + s"; childDelta = $childDelta")
     if (boundParticle != null) {
       routeSuccessfullyBound(boundParticle, graphEditor)
     } else {
@@ -131,21 +131,19 @@ trait Binding
     println("routeSuccessfullyBound: boundParticle=" + boundParticle.mkString(", "))
     
     if (boundParticle.isResult) {
-      println("boundParticle.isResult == true")
       // Query successful, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
+      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
+      println(s"is result; send tickets to $eip")
       if (boundParticle.isBindingQuery) {
         graphEditor.sendSignal(boundParticle, queryVertexId)
       } else {
         graphEditor.sendSignal(1, queryVertexId)
         graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
       }
-      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
-      println("Send tickets to " + queryVertexId + s" (= $eip)")
     } else {
-      println("boundParticle.isResult not true;")
       val eip = new EfficientIndexPattern(boundParticle.routingAddress).toTriplePattern
-      println("Sending boundParticle to " + boundParticle.routingAddress + s" (= $eip)")
+      println(s"NOT result; sending boundParticle to $eip")
       graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
     }
   }

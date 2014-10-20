@@ -64,7 +64,7 @@ trait Forwarding[State] extends IndexVertex[State] {
       var extras = absoluteValueOfTotalTickets % edges
       val averageTicketQuery = query.copyWithTickets(avg, complete)
       val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
-      println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
+      //println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
       def sendTo(childDelta: Int) {
         val routingAddress = nextRoutingAddress(childDelta)
         val eip = new EfficientIndexPattern(routingAddress).toTriplePattern
@@ -96,49 +96,19 @@ trait Forwarding[State] extends IndexVertex[State] {
       graphEditor.sendSignal(cardinality, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
-//      val edges = edgeCount
-//      val totalTickets = query.tickets
-//      val absoluteValueOfTotalTickets = if (totalTickets < 0) -totalTickets else totalTickets // inlined math.abs
-//      val avg = absoluteValueOfTotalTickets / edges
-//      val complete = avg > 0 && totalTickets > 0
-//      var extras = absoluteValueOfTotalTickets % edges
-//      val averageTicketQuery = query.copyWithTickets(avg, complete)
-//      val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
       import com.signalcollect.triplerush.TrGlobal
-      val sendToDictionary = TrGlobal.useDict // TODO determine when there's a filter check
+      val sendToDictionary = TrGlobal.useDict && false // TODO determine when there's a filter check
       
       if (sendToDictionary) {
         val indexInfo = new EfficientIndexPattern(id)
         val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
-        println("checkDictionary: go to dictionary. query = " + queryWithAddr.mkString(", "))
+        //println("checkDictionary: go to dictionary. query = " + queryWithAddr.mkString(", "))
         graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
       }
       else {
-        println("checkDictionary: call processQuery; query = " + query.mkString(", "))
+        //println("checkDictionary: call processQuery; query = " + query.mkString(", "))
         processQuery(query, graphEditor)
       }
-      
-//      def sendTo(childDelta: Int) {
-//        val routingAddress = nextRoutingAddress(childDelta)
-//        val messageDestination = if(sendToDictionary) DICTIONARY_ID else routingAddress
-//        val eip = new EfficientIndexPattern(messageDestination).toTriplePattern
-//        println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
-//        println("Routing address: " + eip + " (child delta: " + childDelta + ")")
-//
-//        if (extras > 0) {
-//          extras -= 1
-//          graphEditor.sendSignal(
-//            if(sendToDictionary) FilterRequest(aboveAverageTicketQuery, routingAddress) else aboveAverageTicketQuery
-//            , messageDestination
-//          )
-//        } else if (avg > 0) {
-//          graphEditor.sendSignal(
-//            if(sendToDictionary) FilterRequest(averageTicketQuery, routingAddress) else averageTicketQuery
-//            , messageDestination
-//          )
-//        }
-//      }
-//      foreachChildDelta(sendTo)
     }
   }
 

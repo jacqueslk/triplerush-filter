@@ -87,21 +87,26 @@ abstract class IndexVertex[State](val id: Long)
 
 
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
+    // Temp code for output ---------
+    val infoS = expose("Subject")  .toString.replace("http://", "")
+    val infoP = expose("Predicate").toString.replace("http://", "")
+    val infoO = expose("Object")   .toString.replace("http://", "")
+    val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
+    println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
+    // End output code ----------
     signal match {
       case query: Array[Int] =>
-        println("\n==== IndexVertex::" + expose.toList(3) + "=====")
         println("Deliver Signal Array[Int]: " + query.mkString(", "))
         checkDictionary(query, graphEditor)
       case filter: FilterRequest =>
-        println("\n==== IndexVertex::" + expose.toList(3) + "=====")
         println("Deliver Signal FilterRequest: " + filter.query.mkString(", "))
         processQuery(filter.query, graphEditor)
       case response: FilterResponse =>
-        println("\n==== IndexVertex::" + expose.toList(3) + "=====")
         println("Deliver Signal FilterResponse: " + response.query.mkString(", "))
         processQuery(response.query, graphEditor)
       case cr: CardinalityRequest =>
-        println("Cardinality Request: " + cr)
+        val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
+        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip.toString)
         handleCardinalityRequest(cr, graphEditor)
       case ChildIdRequest(requestor) =>
         println("ChildIdRequest: " + requestor)

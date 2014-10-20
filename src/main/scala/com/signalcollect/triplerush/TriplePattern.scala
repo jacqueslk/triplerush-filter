@@ -52,11 +52,11 @@ object EfficientIndexPattern {
       val second = if (o != 0) {
         o
       } else {
-        p | Int.MinValue // make sure that p is negative
+        p | Int.MinValue
       }
       embed2IntsInALong(first, second)
     } else {
-      val first = p | Int.MinValue // make sure that p is negative
+      val first = p | Int.MinValue
       val second = o
       embed2IntsInALong(first, second)
     }
