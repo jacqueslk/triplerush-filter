@@ -24,7 +24,10 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
 
       println("START PREPARE EXECUTION--------------")
       tr.prepareExecution
+      //throw new Exception("TEMP FINISH")
       println("!!!!!!!!!!! END PREPARE EXECUTION\r================================\r\r\r\r")
+      
+
       
       val variables = List("T", "A", "B")
       val queryString = """

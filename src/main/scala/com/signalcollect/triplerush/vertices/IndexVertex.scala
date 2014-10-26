@@ -39,6 +39,8 @@ import com.signalcollect.triplerush.EfficientIndexPattern
 abstract class IndexVertex[State](val id: Long)
   extends BaseVertex[State]
   with ParentBuilding[State] {
+  
+  val DICTIONARY_ID = Long.MaxValue
 
   override def expose: Map[String, Any] = {
     val indexType = getClass.getSimpleName
@@ -87,11 +89,17 @@ abstract class IndexVertex[State](val id: Long)
 
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
     // Temp code for output ---------
-    val infoS = expose("Subject")  .toString.replace("http://", "")
-    val infoP = expose("Predicate").toString.replace("http://", "")
-    val infoO = expose("Object")   .toString.replace("http://", "")
-    val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
-    println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
+    if (id != DICTIONARY_ID) {
+      val infoS = expose("Subject")  .toString.replace("http://", "")
+      val infoP = expose("Predicate").toString.replace("http://", "")
+      val infoO = expose("Object")   .toString.replace("http://", "")
+      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
+      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
+    }
+    else {
+      val eip = new EfficientIndexPattern(id).toTriplePattern
+      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
+    }
     // End output code ----------
     
     signal match {
@@ -106,7 +114,7 @@ abstract class IndexVertex[State](val id: Long)
         processQuery(response.query, graphEditor)
       case cr: CardinalityRequest =>
         val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
-        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip.toString)
+        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip)
         handleCardinalityRequest(cr, graphEditor)
       case ChildIdRequest(requestor) =>
         println("ChildIdRequest: " + requestor)

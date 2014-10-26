@@ -12,7 +12,7 @@ import com.signalcollect.triplerush.QueryParticle
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.util.SplayIntSet
 
-final class DictionaryVertex extends IndexVertex(10) {
+final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   val random = new Random();
 

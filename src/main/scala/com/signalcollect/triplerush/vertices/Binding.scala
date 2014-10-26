@@ -32,8 +32,6 @@ import com.signalcollect.triplerush.QueryIds
 trait Binding
   extends IndexVertex[Any]
   with ParentBuilding[Any] {
-  
-  val DICTIONARY_ID = 10
 
   def onEdgeAdded(ge: GraphEditor[Long, Any])
 
@@ -74,7 +72,6 @@ trait Binding
     }
     else {
       processQuery(query, graphEditor)
-      //println("... forwarding to processQuery")
     }
   }
 

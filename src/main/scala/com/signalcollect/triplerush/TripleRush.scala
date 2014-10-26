@@ -92,7 +92,7 @@ case class TripleRush(
       withEagerIdleDetection(false).
       withKryoRegistrations(List(
         "com.signalcollect.triplerush.vertices.RootIndex",
-        "com.signalcollect.triplerush.vertices.DictionaryVertex", // <--- Lucas
+        "com.signalcollect.triplerush.vertices.DictionaryVertex",
         "com.signalcollect.triplerush.vertices.SIndex",
         "com.signalcollect.triplerush.vertices.PIndex",
         "com.signalcollect.triplerush.vertices.OIndex",

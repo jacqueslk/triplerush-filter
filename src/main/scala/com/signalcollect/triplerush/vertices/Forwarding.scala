@@ -26,8 +26,6 @@ import com.signalcollect.triplerush.FilterRequest
 import com.signalcollect.triplerush.QueryIds
 
 trait Forwarding[State] extends IndexVertex[State] {
-  
-  val DICTIONARY_ID = 10
 
   override def targetIds: Traversable[Long] = {
     new Traversable[Long] {
