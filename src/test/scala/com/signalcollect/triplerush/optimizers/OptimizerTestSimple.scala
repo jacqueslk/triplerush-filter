@@ -40,7 +40,7 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       result.foreach(e => 
         {
           variables.foreach(v => 
-            print(s"?$v = " + e.apply(v) + "; ") 
+            print(s"?$v = " + e(v) + "; ") 
           )
           println
         }

@@ -50,21 +50,22 @@ class OptimizerTestSimpleExtended extends FlatSpec with Checkers with TestAnnoun
       tr.prepareExecution
       println("!!!!!!!!!!! END PREPARE EXECUTION\r================================\r\r\r\r")
       
-      val variables = List("A", "B")
+      val variables = List("A", "B", "C")
       val queryString = """
-        SELECT ?A ?B
+        SELECT ?A ?B ?C
       	WHERE {
-		  ?A ?C ?B .
-		  ?B ?E ?F
+		  <http://G> <http://p> ?B .
+		  ?B ?A ?C
       }"""
       
       val query = Sparql(queryString).get
       val result = query.resultIterator.toList
+
       println("Total results: " + result.size)
       result.foreach(e => 
         {
           variables.foreach(v => 
-            print(s"?$v = " + e.apply(v) + "; ") 
+            print(s"?$v = " + e(v) + "; ") 
           )
           println
         }

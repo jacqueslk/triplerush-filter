@@ -64,7 +64,7 @@ trait Binding
   }
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    val sendToDictionary = TrGlobal.useDict && false  // <!!!!!!!!!
+    val sendToDictionary = TrGlobal.useDict //&& false
     //println("checkDictionary: query=" + query.mkString(", "))
     if (sendToDictionary) {
       val indexInfo = new EfficientIndexPattern(id)
