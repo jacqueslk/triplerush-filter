@@ -31,6 +31,8 @@ class OptimizerTest extends FlatSpec with Checkers with TestAnnouncements {
 		  ?A <http://p> ?T
       }"""
       val query = Sparql(queryString).get
+      val queryForParticle = Seq(TriplePattern(tr.dictionary(""), -1, -2))
+      tr.executeQuery(queryForParticle)
       val result = query.resultIterator.toList
     } finally {
       tr.shutdown

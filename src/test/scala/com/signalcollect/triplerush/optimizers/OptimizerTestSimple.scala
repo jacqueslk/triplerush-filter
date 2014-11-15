@@ -22,10 +22,9 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       tr.addTriple("http://b", "http://p", "http://e")
       tr.addTriple("http://b", "http://p", "http://d")
 
-      println("START PREPARE EXECUTION--------------")
+      println("START PREPARE EXECUTION\r================================")
       tr.prepareExecution
-      //throw new Exception("TEMP FINISH")
-      println("!!!!!!!!!!! END PREPARE EXECUTION\r================================\r\r\r\r")
+      println("END PREPARE EXECUTION\r================================\r\r\r\r")
       
 
       

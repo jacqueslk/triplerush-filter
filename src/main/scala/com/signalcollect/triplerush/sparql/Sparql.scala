@@ -59,19 +59,15 @@ case class Sparql(
   }
 
   protected class DecodingIterator(encodedIterator: Iterator[Array[Int]]) extends Iterator[String => String] {
-    println("DECODING ITERATOR GET")
     def next: String => String = {
       val nextEncoded = encodedIterator.next
-      println("NEXTENCODED LINE------------")
       lookupVariableBinding(nextEncoded)
     }
     def hasNext = encodedIterator.hasNext
   }
 
   def resultIterator: Iterator[String => String] = {
-    println("resultIterator--------------------------")
     if (orderBy == None && limit == None) {
-      println("new DECODINGITERATOR_----------------")
       new DecodingIterator(encodedResults)
     } else if (orderBy.isDefined && limit.isDefined) {
       val orderByIndex = VariableEncoding.variableIdToDecodingIndex(orderBy.get)

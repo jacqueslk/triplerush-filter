@@ -288,7 +288,7 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     b
   }
 
-  def isResult = r.length == 5 + numberOfBindings + numberOfFilters*3 // TODO: remove filters from QP ?
+  def isResult = r.length == 5 + numberOfBindings + numberOfFilters*3 // TODO handle filters differently?
 
   def queryId: Int = r(0)
 
@@ -309,6 +309,10 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
 
   def writeNumberOfBindings(numberOfBindings: Int) {
     r(3) = numberOfBindings
+  }
+  
+  def writeNumberOfFilters(numberOfFilters: Int) {
+    r(numberOfBindings + 4) = numberOfFilters
   }
 
   def writeBindings(bindings: Seq[Int]) {
@@ -343,8 +347,16 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     }
   }
   
-  def writeFilters(entries: Seq[FilterTriple]) {
-    
+  def writeFilters(filters: Seq[FilterTriple]) {
+    // Index holding # filters
+    val filterNrIndex = 4 + numberOfBindings
+    r(filterNrIndex) = filters.length
+    var i = 0
+    while (i < filters.length) {
+      r(filterNrIndex + i*3 + 1) = filters(i).entry
+      r(filterNrIndex + i*3 + 2) = filters(i).comparator
+      r(filterNrIndex + i*3 + 3) = filters(i).value
+    }
   }
 
   /**
@@ -382,6 +394,11 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     val pIndex = sIndex + 1
     val oIndex = sIndex + 2
     TriplePattern(r(sIndex), r(pIndex), r(oIndex))
+  }
+  
+  def filter(index: Int) : FilterTriple = {
+    val filterOffset = 5 + numberOfBindings + index * 3
+    FilterTriple(r(filterOffset), r(filterOffset+1), r(filterOffset+2))
   }
 
   def lastPattern: TriplePattern = {
