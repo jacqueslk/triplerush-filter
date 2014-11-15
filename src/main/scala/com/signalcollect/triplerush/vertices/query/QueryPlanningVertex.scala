@@ -21,6 +21,7 @@ package com.signalcollect.triplerush.vertices.query
 
 import scala.concurrent.Promise
 import com.signalcollect.GraphEditor
+import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.QueryIds
 import com.signalcollect.triplerush.QueryParticle
 import com.signalcollect.triplerush.optimizers.Optimizer
@@ -44,8 +45,9 @@ case class QueryPlanningResult(
 class QueryPlanningVertex(
   query: Seq[TriplePattern],
   plannerPromise: Promise[QueryPlanningResult],
-  optimizer: Optimizer)
-  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, 0l, 0, Some(optimizer)) {
+  optimizer: Optimizer,
+  filters: Seq[FilterTriple])
+  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, 0l, 0, Some(optimizer), filters) {
 
   final val id = QueryIds.embedQueryIdInLong(QueryIds.nextQueryId)
 

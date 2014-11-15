@@ -22,6 +22,7 @@ package com.signalcollect.triplerush.vertices.query
 
 import scala.concurrent.Promise
 import com.signalcollect.GraphEditor
+import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.QueryIds
 import com.signalcollect.triplerush.QueryParticle
 import com.signalcollect.triplerush.optimizers.Optimizer
@@ -34,8 +35,9 @@ class ResultBindingQueryVertex(
   tickets: Long,
   resultPromise: Promise[Traversable[Array[Int]]],
   statsPromise: Promise[Map[Any, Any]],
-  optimizer: Option[Optimizer])
-  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, tickets, numberOfSelectVariables, optimizer) {
+  optimizer: Option[Optimizer],
+  filters: Seq[FilterTriple])
+  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, tickets, numberOfSelectVariables, optimizer, filters) {
    
   final val id = QueryIds.embedQueryIdInLong(QueryIds.nextQueryId)
   

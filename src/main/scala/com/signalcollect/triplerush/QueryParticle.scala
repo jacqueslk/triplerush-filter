@@ -107,8 +107,10 @@ object QueryParticle {
     patterns: Seq[TriplePattern],
     queryId: Int,
     numberOfSelectVariables: Int,
+    filters: Seq[FilterTriple] = Seq(),
     tickets: Long = Long.MaxValue): Array[Int] = {
-    val ints = 4 + numberOfSelectVariables + 3 * patterns.length
+    // 5 = query ID, tickets (2), # select vars, # filters
+    val ints = 5 + numberOfSelectVariables + 3 * filters.length + 3 * patterns.length
     val r = new Array[Int](ints)
     r.writeQueryId(queryId)
     r.writeNumberOfBindings(numberOfSelectVariables)
@@ -127,6 +129,8 @@ object QueryParticle {
  * 1-2 long:   tickets (long encoded as 2 ints)
  * 3 int:    numberOfBindings
  * 4-? ints:   bindings
+ * x int: numberOfFilters
+ * x x*3 ints: filters 
  * ? ?*3 ints: triple patterns in reverse matching order (last one
  *           gets matched first).
  */
@@ -284,7 +288,7 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     b
   }
 
-  def isResult = r.length == 4 + numberOfBindings
+  def isResult = r.length == 5 + numberOfBindings + numberOfFilters*3 // TODO: remove filters from QP ?
 
   def queryId: Int = r(0)
 
@@ -300,6 +304,8 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
   }
 
   def numberOfBindings: Int = r(3)
+  
+  def numberOfFilters: Int = r(numberOfBindings + 4)
 
   def writeNumberOfBindings(numberOfBindings: Int) {
     r(3) = numberOfBindings
@@ -336,6 +342,10 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
       i += 1
     }
   }
+  
+  def writeFilters(entries: Seq[FilterTriple]) {
+    
+  }
 
   /**
    * Requires the index where the subject will be written.
@@ -368,7 +378,7 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
   def numberOfPatterns: Int = (r.length - 4 - numberOfBindings) / 3
 
   def pattern(index: Int) = {
-    val sIndex = 3 * index + 4 + numberOfBindings
+    val sIndex = 3 * index + 5 + numberOfBindings + numberOfFilters * 3
     val pIndex = sIndex + 1
     val oIndex = sIndex + 2
     TriplePattern(r(sIndex), r(pIndex), r(oIndex))
@@ -459,5 +469,7 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     }
     return bindSubject(patternS, patternP, patternO, toBindS, toBindP, toBindO, true)
   }
+  
+  
 }
   

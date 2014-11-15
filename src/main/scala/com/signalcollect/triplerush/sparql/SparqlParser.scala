@@ -58,6 +58,7 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   val union = "UNION" // | "union"
   val orderBy = "ORDER" ~> "BY"
   val limit = "LIMIT"
+  val filter = "FILTER"
 
   val url: Parser[String] = "[-a-zA-Z0-9:/\\.#_]+".r
 
