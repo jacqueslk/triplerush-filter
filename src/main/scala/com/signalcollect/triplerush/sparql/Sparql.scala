@@ -125,6 +125,7 @@ object Sparql {
    */
   def apply(query: String)(implicit tr: TripleRush): Option[Sparql] = {
     println("Sparql: def apply")
+    // TODO remove
     import com.signalcollect.triplerush.TrGlobal
     TrGlobal.useDict = true
     
@@ -206,10 +207,14 @@ object Sparql {
       }
 
       val encodedPatterns = patterns.map {
-        case ParsedPattern(s, p, o) =>
-          TriplePattern(encodeVariableOrIri(s), encodeVariableOrIri(p), encodeVariableOrIri(o))
+        case ParsedPattern(s, p, o, isFilter) =>
+          if (!isFilter) {
+            TriplePattern(encodeVariableOrIri(s), encodeVariableOrIri(p), encodeVariableOrIri(o))
+          }
+          else {
+            null // TODO check this
+          }
       }
-
       encodedPatterns
     }
 

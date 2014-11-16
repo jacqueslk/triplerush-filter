@@ -34,7 +34,11 @@ case class Iri(url: String) extends VariableOrBound
 //
 case class StringLiteral(string: String) extends VariableOrBound
 
-case class ParsedPattern(s: VariableOrBound, p: VariableOrBound, o: VariableOrBound)
+case class ParsedPattern(s: VariableOrBound, p: VariableOrBound, o: VariableOrBound, isFilter: Boolean)
+
+//case class FilterEntry(s: VariableOrBound, p: String, o: VariableOrBound)
+
+//case class FilterEntry(entry: VariableOrBound, comparator: String, value: VariableOrBound)
 
 case class Select(
   selectVariableNames: List[String],
@@ -61,6 +65,9 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   val filter = "FILTER"
 
   val url: Parser[String] = "[-a-zA-Z0-9:/\\.#_]+".r
+  
+  // match =, !=, >, <, >= and <=
+  val arithmeticOperator: Parser[String] = "(!?=|(>|<)=?)".r
 
   val iri: Parser[Iri] = {
     (("<" ~> url <~ ">") | url) ^^ {
@@ -109,13 +116,21 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   val pattern: Parser[ParsedPattern] = {
     variableOrBound ~! (a | variableOrBound) ~! variableOrBound ^^ {
       case s ~ p ~ o =>
-        ParsedPattern(s, p, o)
+        ParsedPattern(s, p, o, false)
+    }
+  }
+  
+  val filterSpec: Parser[ParsedPattern] = {
+    "FILTER(" ~> variableOrBound ~! ">" ~! variableOrBound <~ ")" ^^ {
+      case s ~ p ~ o =>
+        ParsedPattern(s, StringLiteral(p), o, true) 
     }
   }
 
   val patternList: Parser[List[ParsedPattern]] = {
-    ("{" ~> rep1sep(pattern, ".") <~ opt(".")) <~ "}" ^^ {
+    ("{" ~> (rep1sep(pattern | filterSpec, ".")) <~ opt(".")) <~ "}" ^^ {
       case patterns =>
+        println(patterns)
         patterns
     }
   }

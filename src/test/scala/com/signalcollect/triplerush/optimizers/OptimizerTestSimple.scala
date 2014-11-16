@@ -33,7 +33,8 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
         SELECT ?T ?A ?B
       	WHERE {
           <http://a> <http://p> ?A .
-          ?A ?B ?T
+          ?A ?B ?T .
+          FILTER(?A < 6)
         }"""
       
       val query = Sparql(queryString).get

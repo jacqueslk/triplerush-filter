@@ -35,7 +35,7 @@ SELECT ?name WHERE { ?x foaf:name ?name }
     assert(parsed === ParsedSparqlQuery(
       Map("foaf" -> """http://xmlns.com/foaf/0.1/"""),
       Select(List("name"),
-        List(List(ParsedPattern(Variable("x"), Iri("foaf:name"), Variable("name")))), false)))
+        List(List(ParsedPattern(Variable("x"), Iri("foaf:name"), Variable("name"), false))), false)))
   }
 
   it should "parse a query with multiple patterns" in {
@@ -51,9 +51,9 @@ WHERE {
     assert(parsed === ParsedSparqlQuery(Map(),
       Select(List("T", "A", "B"),
         List(List(
-          ParsedPattern(Iri("""http://dbpedia.org/resource/Elvis"""), Iri("""http://dbpedia.org/property/wikilink"""), Variable("A")),
-          ParsedPattern(Variable("A"), Iri("""http://dbpedia.org/property/wikilink"""), Variable("B")),
-          ParsedPattern(Variable("B"), Iri("""http://dbpedia.org/property/wikilink"""), Variable("T")))), false)))
+          ParsedPattern(Iri("""http://dbpedia.org/resource/Elvis"""), Iri("""http://dbpedia.org/property/wikilink"""), Variable("A"), false),
+          ParsedPattern(Variable("A"), Iri("""http://dbpedia.org/property/wikilink"""), Variable("B"), false),
+          ParsedPattern(Variable("B"), Iri("""http://dbpedia.org/property/wikilink"""), Variable("T"), false))), false)))
   }
 
   it should "support the DISTINCT keyword" in {
@@ -81,9 +81,9 @@ WHERE {
     val parsed = SparqlParser.parse(q)
     assert(parsed.select.patternUnions === List(
       List(
-        ParsedPattern(Iri("""http://dbpedia.org/resource/Elvis"""), Variable("property"), Variable("hasValue"))),
+        ParsedPattern(Iri("""http://dbpedia.org/resource/Elvis"""), Variable("property"), Variable("hasValue"), false)),
       List(
-        ParsedPattern(Variable("isValueOf"), Variable("property"), Iri("""http://dbpedia.org/resource/Memphis""")))))
+        ParsedPattern(Variable("isValueOf"), Variable("property"), Iri("""http://dbpedia.org/resource/Memphis"""), false))))
   }
 
   it should "support the LIMIT keyword" in {
