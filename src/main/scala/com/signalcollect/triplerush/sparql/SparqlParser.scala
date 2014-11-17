@@ -36,9 +36,6 @@ case class StringLiteral(string: String) extends VariableOrBound
 
 case class ParsedPattern(s: VariableOrBound, p: VariableOrBound, o: VariableOrBound, isFilter: Boolean)
 
-//case class FilterEntry(s: VariableOrBound, p: String, o: VariableOrBound)
-
-//case class FilterEntry(entry: VariableOrBound, comparator: String, value: VariableOrBound)
 
 case class Select(
   selectVariableNames: List[String],
@@ -126,17 +123,32 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
         ParsedPattern(s, StringLiteral(p), o, true) 
     }
   }
+  
+  val patternOrFilter: Parser[List[ParsedPattern]] = {
+    rep1sep(pattern, ".") | filterRepetition
+  }
+  
+  val patternRepetition: Parser[List[ParsedPattern]] = {
+    rep1sep(pattern, ".") <~ opt(".")
+  }
+  
+  val filterRepetition: Parser[List[ParsedPattern]] = {
+    rep1(filterSpec)
+  }
 
   val patternList: Parser[List[ParsedPattern]] = {
     ("{" ~> (rep1sep(pattern, ".") ~ opt(filterSpec)) <~ opt(".")) <~ "}" ^^ {
       case patterns ~ filterSpec =>
-        if (filterSpec != None) {
+        if (filterSpec.isDefined) {
           patterns ++ filterSpec
         }
         else {
           patterns
         }
     }
+//    "{" ~> rep1(patternOrFilter) <~ "}" ^^ {
+//      _.flatten
+//    }
   }
 
   val unionOfPatternLists: Parser[List[Seq[ParsedPattern]]] = {

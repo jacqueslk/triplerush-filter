@@ -61,7 +61,7 @@ trait Binding
   }
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    val sendToDictionary = false // TODO =---
+    val sendToDictionary = query.numberOfFilters > 0 // TODO determine when there's a filter check
     //println("checkDictionary: query=" + query.mkString(", "))
     if (sendToDictionary) {
       val indexInfo = new EfficientIndexPattern(id)

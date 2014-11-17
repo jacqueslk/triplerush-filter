@@ -94,7 +94,7 @@ trait Forwarding[State] extends IndexVertex[State] {
       graphEditor.sendSignal(cardinality, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
-      val sendToDictionary = false // TODO determine when there's a filter check
+      val sendToDictionary = query.numberOfFilters > 0 // TODO determine when there's a filter check
       
       if (sendToDictionary) {
         val indexInfo = new EfficientIndexPattern(id)

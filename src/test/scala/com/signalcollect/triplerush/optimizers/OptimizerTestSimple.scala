@@ -18,9 +18,9 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       tr.addTriple("http://a", "http://p", "http://b")
       tr.addTriple("http://a", "http://p", "http://c")
       tr.addTriple("http://a", "http://p", "http://d")
-      tr.addTriple("http://b", "http://p", "http://c")
-      tr.addTriple("http://b", "http://p", "http://e")
-      tr.addTriple("http://b", "http://p", "http://d")
+      tr.addTriple("http://b", "http://p", "123")
+      tr.addTriple("http://b", "http://p", "14")
+      tr.addTriple("http://b", "http://p", "1")
 
       println("START PREPARE EXECUTION\r================================")
       tr.prepareExecution
@@ -28,13 +28,13 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       
 
       
-      val variables = List("T", "A", "B")
+      val variables = List("A", "T", "B")
       val queryString = """
         SELECT ?T ?A ?B
       	WHERE {
           <http://a> <http://p> ?A .
-          ?A ?B ?T
-          FILTER(?A < 6)
+          ?A ?T ?B
+          FILTER(?B > 20)
         }"""
       
       val query = Sparql(queryString).get

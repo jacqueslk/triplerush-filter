@@ -390,6 +390,14 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
   def patterns = {
     for (i <- numberOfPatterns - 1 to 0 by -1) yield pattern(i)
   }
+  
+  def getVariable(index: Int): Int = {
+    val posIndex = -index
+    if (posIndex <= numberOfBindings && posIndex > 0)
+      r(3+posIndex)
+    else
+      throw new Exception(s"Invalid variable index $index")
+  }
 
   def numberOfPatterns: Int = (r.length - 4 - numberOfBindings) / 3
 
@@ -400,9 +408,17 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     TriplePattern(r(sIndex), r(pIndex), r(oIndex))
   }
   
-  def filter(index: Int) : FilterTriple = {
+  def filter(index: Int): FilterTriple = {
     val filterOffset = 5 + numberOfBindings + index * 3
     FilterTriple(r(filterOffset), r(filterOffset+1), r(filterOffset+2))
+  }
+  
+  def removeFilter(index: Int) {
+    // Set fields to 0 to denote them as "useless"
+    val startIndex = 3 * index + 5 + numberOfBindings
+    r(startIndex)   = 0
+    r(startIndex+1) = 0
+    r(startIndex+2) = 0
   }
 
   def lastPattern: TriplePattern = {
