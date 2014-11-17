@@ -59,7 +59,6 @@ import com.signalcollect.triplerush.loading.NtriplesLoader
  */
 object TrGlobal {
   var dictionary: Option[Dictionary] = None
-  var useDict = false // TEMP so pre-query operations don't go through the dictionaryVertex for now
 }
 
 case class TripleRush(
@@ -260,7 +259,7 @@ case class TripleRush(
       VariableEncoding.requiredVariableBindingsSlots(query))
     val resultIterator = new ResultIterator
     val usedOptimizer = if (optimizerOption.isDefined) optimizerOption else optimizer
-    val queryVertex = new ResultIteratorQueryVertex(query, selectVariables, tickets, resultIterator, usedOptimizer, filters) // lucas
+    val queryVertex = new ResultIteratorQueryVertex(query, selectVariables, tickets, resultIterator, usedOptimizer, filters)
     graph.addVertex(queryVertex)
     resultIterator
   }

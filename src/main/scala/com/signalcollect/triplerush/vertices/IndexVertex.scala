@@ -90,11 +90,11 @@ abstract class IndexVertex[State](val id: Long)
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
     // Temp code for output ---------
     if (id != DICTIONARY_ID) {
-      val infoS = expose("Subject")  .toString.replace("http://", "")
-      val infoP = expose("Predicate").toString.replace("http://", "")
-      val infoO = expose("Object")   .toString.replace("http://", "")
-      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
-      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
+//      val infoS = expose("Subject")  .toString.replace("http://", "")
+//      val infoP = expose("Predicate").toString.replace("http://", "")
+//      val infoO = expose("Object")   .toString.replace("http://", "")
+//      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
+//      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
     }
     else {
       val eip = new EfficientIndexPattern(id).toTriplePattern

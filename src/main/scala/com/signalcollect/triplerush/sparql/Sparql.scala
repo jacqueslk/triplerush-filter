@@ -23,6 +23,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.signalcollect.triplerush.Dictionary
+import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.TriplePattern
 import com.signalcollect.triplerush.TripleRush
 import com.signalcollect.triplerush.util.ResultBindingsHashSet
@@ -40,6 +41,7 @@ case class Sparql(
   variableNameToId: Map[String, Int] = Map.empty[String, Int],
   idToVariableName: IndexedSeq[String] = Vector(),
   isDistinct: Boolean = false,
+  filters: Seq[FilterTriple] = Seq(), // TODO -- represent FILTER unions!
   orderBy: Option[Int] = None,
   limit: Option[Int] = None) {
 
@@ -124,11 +126,6 @@ object Sparql {
    *  If the query might have results returns Some(Sparql), else returns None.
    */
   def apply(query: String)(implicit tr: TripleRush): Option[Sparql] = {
-    println("Sparql: def apply")
-    // TODO remove
-    import com.signalcollect.triplerush.TrGlobal
-    TrGlobal.useDict = true
-    
     val d = tr.dictionary
     val parsed: ParsedSparqlQuery = SparqlParser.parse(query)
     println(parsed)
@@ -157,6 +154,16 @@ object Sparql {
         idToVariableName = idToVariableName :+ variableName
         id
       }
+    }
+    
+    // Convert variable to index for FILTERs
+    // Any variable not yet encoded should throw an error
+    def variableToIndex(variableName: String): Int = {
+      val idOption = variableNameToId.get(variableName)
+      if (idOption.isDefined) {
+        idOption.get
+      }
+      else throw new Exception("Unknown variable in filter")
     }
     
 
@@ -208,22 +215,45 @@ object Sparql {
         }
       }
       
-      val encodedPatterns : Seq[Any] = patterns.map {
-        case ParsedPattern(s, p, o, isFilter) =>
-          if (!isFilter) {
-            TriplePattern(encodeVariableOrIri(s), encodeVariableOrIri(p), encodeVariableOrIri(o))
-          }
-      }
-      val cleanList = encodedPatterns.collect {
-        case (value: TriplePattern) => value
+      val encodedPatterns = patterns.collect {
+        case ParsedPattern(s, p, o, false) =>
+          TriplePattern(encodeVariableOrIri(s), encodeVariableOrIri(p), encodeVariableOrIri(o))
       }
 
-      cleanList
+      encodedPatterns
+    }
+    
+    def dictionaryEncodeFilters(patterns: Seq[ParsedPattern]): Seq[FilterTriple] = {
+      def encodeComparator(comparator: VariableOrBound) : Int = {
+        comparator match {
+          case StringLiteral(comparator) =>
+            FilterTriple.operatorToInt(comparator)
+          case _ =>
+            throw new Exception(s"Unsupported operator type $comparator")
+        }
+      }
+      
+      def encodeVariableOrInt(field: VariableOrBound) : Int = {
+        field match {
+          case Variable(name) =>
+            variableToIndex(name)
+          case Iri(name) => // IRI.... TODO ---------
+            name.toInt // stupid, stupid... TODO -------
+        }
+      }
+      
+      val encodedFilters = patterns.collect {
+        case ParsedPattern(s, p, o, true) =>
+          FilterTriple(encodeVariableOrInt(s), encodeComparator(p), encodeVariableOrInt(o))
+      }
+      encodedFilters
     }
 
 
     // Needs to happen before 'containsEntryThatIsNotInDictionary' check, because it modifies that flag as a side effect.
     val encodedPatternUnions = select.patternUnions.map(dictionaryEncodePatterns)
+    val encodedFilters = select.patternUnions.map(dictionaryEncodeFilters)
+    println(s"Encoded Filters:\r$encodedFilters")
 
     if (containsEntryThatIsNotInDictionary) {
       None
@@ -237,6 +267,7 @@ object Sparql {
           idToVariableName = idToVariableName,
           isDistinct = parsed.select.isDistinct,
           orderBy = select.orderBy.map(variableNameToId),
+          filters = encodedFilters(0), // arghhhh TODO --------
           limit = select.limit))
     }
   }

@@ -94,8 +94,7 @@ trait Forwarding[State] extends IndexVertex[State] {
       graphEditor.sendSignal(cardinality, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
-      import com.signalcollect.triplerush.TrGlobal
-      val sendToDictionary = TrGlobal.useDict //&& false // TODO determine when there's a filter check
+      val sendToDictionary = false // TODO determine when there's a filter check
       
       if (sendToDictionary) {
         val indexInfo = new EfficientIndexPattern(id)

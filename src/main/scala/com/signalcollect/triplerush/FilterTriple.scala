@@ -9,7 +9,7 @@ object FilterTriple {
       case "!=" => 4
       case ">=" => 5
       case "<=" => 6
-      case _ => throw new Exception("Unsupported operator")
+      case _ => throw new Exception(s"Unsupported operator: $op")
     }
   }
    

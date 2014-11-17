@@ -25,7 +25,6 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.EfficientIndexPattern // <-- DEBUG Lucas #
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
 import com.signalcollect.triplerush.FilterRequest
-import com.signalcollect.triplerush.TrGlobal
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
 
@@ -62,7 +61,7 @@ trait Binding
   }
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    val sendToDictionary = TrGlobal.useDict //&& false
+    val sendToDictionary = false // TODO =---
     //println("checkDictionary: query=" + query.mkString(", "))
     if (sendToDictionary) {
       val indexInfo = new EfficientIndexPattern(id)
