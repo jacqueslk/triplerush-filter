@@ -57,6 +57,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     }
   }
   
-  def passesFilter: Boolean = (random.nextInt() % 6) != 0
+  def passesFilter: Boolean = true //(random.nextInt() % 6) != 0
   
 }

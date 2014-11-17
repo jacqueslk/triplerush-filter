@@ -131,6 +131,7 @@ object Sparql {
     
     val d = tr.dictionary
     val parsed: ParsedSparqlQuery = SparqlParser.parse(query)
+    println(parsed)
     var containsEntryThatIsNotInDictionary = false
     val prefixes = parsed.prefixes
     val select = parsed.select
@@ -157,6 +158,7 @@ object Sparql {
         id
       }
     }
+    
 
     def dictionaryEncodePatterns(patterns: Seq[ParsedPattern]): Seq[TriplePattern] = {
 
@@ -205,18 +207,20 @@ object Sparql {
             }
         }
       }
-
-      val encodedPatterns = patterns.map {
+      
+      val encodedPatterns : Seq[Any] = patterns.map {
         case ParsedPattern(s, p, o, isFilter) =>
           if (!isFilter) {
             TriplePattern(encodeVariableOrIri(s), encodeVariableOrIri(p), encodeVariableOrIri(o))
           }
-          else {
-            null // TODO check this
-          }
       }
-      encodedPatterns
+      val cleanList = encodedPatterns.collect {
+        case (value: TriplePattern) => value
+      }
+
+      cleanList
     }
+
 
     // Needs to happen before 'containsEntryThatIsNotInDictionary' check, because it modifies that flag as a side effect.
     val encodedPatternUnions = select.patternUnions.map(dictionaryEncodePatterns)

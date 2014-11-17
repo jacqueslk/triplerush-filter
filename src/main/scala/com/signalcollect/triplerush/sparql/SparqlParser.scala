@@ -121,17 +121,21 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   }
   
   val filterSpec: Parser[ParsedPattern] = {
-    "FILTER(" ~> variableOrBound ~! ">" ~! variableOrBound <~ ")" ^^ {
+    filter ~> ("(" ~> variableOrBound ~ arithmeticOperator ~ variableOrBound) <~ ")"  ^^ {
       case s ~ p ~ o =>
         ParsedPattern(s, StringLiteral(p), o, true) 
     }
   }
 
   val patternList: Parser[List[ParsedPattern]] = {
-    ("{" ~> (rep1sep(pattern | filterSpec, ".")) <~ opt(".")) <~ "}" ^^ {
-      case patterns =>
-        println(patterns)
-        patterns
+    ("{" ~> (rep1sep(pattern, ".") ~ opt(filterSpec)) <~ opt(".")) <~ "}" ^^ {
+      case patterns ~ filterSpec =>
+        if (filterSpec != None) {
+          patterns ++ filterSpec
+        }
+        else {
+          patterns
+        }
     }
   }
 
