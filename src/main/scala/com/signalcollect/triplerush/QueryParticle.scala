@@ -116,6 +116,7 @@ object QueryParticle {
     r.writeNumberOfBindings(numberOfSelectVariables)
     r.writeTickets(tickets)
     r.writePatterns(patterns)
+    r.writeFilters(filters)
     r
   }
 
@@ -347,6 +348,8 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     }
   }
   
+  // Write filter information to query particle
+  // can only be done once binding information is present
   def writeFilters(filters: Seq[FilterTriple]) {
     // Index holding # filters
     val filterNrIndex = 4 + numberOfBindings
@@ -356,6 +359,7 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
       r(filterNrIndex + i*3 + 1) = filters(i).entry
       r(filterNrIndex + i*3 + 2) = filters(i).comparator
       r(filterNrIndex + i*3 + 3) = filters(i).value
+      i += 1
     }
   }
 

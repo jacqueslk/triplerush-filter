@@ -71,7 +71,7 @@ abstract class AbstractQueryVertex[StateType](
           patterns = query,
           queryId = QueryIds.extractQueryIdFromLong(id),
           numberOfSelectVariables = numberOfSelectVariables,
-          filters,
+          filters = filters,
           tickets = tickets)
         dispatchedQuery = Some(particle)
         graphEditor.sendSignal(particle, particle.routingAddress)

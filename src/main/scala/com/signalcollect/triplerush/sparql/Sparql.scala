@@ -69,6 +69,7 @@ case class Sparql(
   }
 
   def resultIterator: Iterator[String => String] = {
+    println(s"Sparql::resultIterator: filters=$filters")
     if (orderBy == None && limit == None) {
       new DecodingIterator(encodedResults)
     } else if (orderBy.isDefined && limit.isDefined) {
@@ -113,7 +114,8 @@ case class Sparql(
   protected def fullEncodedResultIterator: Iterator[Array[Int]] = {
     val iterators = encodedPatternUnions.map {
       patterns =>
-        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables))
+        println(s"Sparql::fullEncodedResultIterator: filters=$filters")
+        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables), filters=filters)
     }
     iterators.reduce(_ ++ _)
   }
