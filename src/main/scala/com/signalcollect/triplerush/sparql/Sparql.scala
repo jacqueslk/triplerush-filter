@@ -220,21 +220,22 @@ object Sparql {
         case ParsedPattern(s, p, o, false) =>
           TriplePattern(encodeVariableOrIri(s), encodeVariableOrIri(p), encodeVariableOrIri(o))
       }
-
       encodedPatterns
     }
     
     def dictionaryEncodeFilters(patterns: Seq[ParsedPattern]): Seq[FilterTriple] = {
-      def encodeComparator(comparator: VariableOrBound) : Int = {
-        comparator match {
+      def encodeComparator(parsedPattern: ParsedPattern): Int = {
+        parsedPattern.p match {
           case StringLiteral(comparator) =>
-            FilterTriple.operatorToInt(comparator)
+            val lhsIsVar = parsedPattern.s.isInstanceOf[Variable]
+            val rhsIsVar = parsedPattern.o.isInstanceOf[Variable]
+            FilterTriple.operatorToInt(comparator, lhsIsVar, rhsIsVar)
           case _ =>
-            throw new Exception(s"Unsupported operator type $comparator")
+            throw new Exception(s"Unsupported operator type in $parsedPattern")
         }
       }
       
-      def encodeVariableOrInt(field: VariableOrBound) : Int = {
+      def encodeVariableOrInt(field: VariableOrBound): Int = {
         field match {
           case Variable(name) =>
             variableToIndex(name)
@@ -244,8 +245,8 @@ object Sparql {
       }
       
       val encodedFilters = patterns.collect {
-        case ParsedPattern(s, p, o, true) =>
-          FilterTriple(encodeVariableOrInt(s), encodeComparator(p), encodeVariableOrInt(o))
+        case item @ ParsedPattern(_, _, _, true) =>
+          FilterTriple(encodeVariableOrInt(item.s), encodeComparator(item), encodeVariableOrInt(item.o))
       }
       encodedFilters
     }

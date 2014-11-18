@@ -356,9 +356,9 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     r(filterNrIndex) = filters.length
     var i = 0
     while (i < filters.length) {
-      r(filterNrIndex + i*3 + 1) = filters(i).entry
+      r(filterNrIndex + i*3 + 1) = filters(i).lhs
       r(filterNrIndex + i*3 + 2) = filters(i).comparator
-      r(filterNrIndex + i*3 + 3) = filters(i).value
+      r(filterNrIndex + i*3 + 3) = filters(i).rhs
       i += 1
     }
   }

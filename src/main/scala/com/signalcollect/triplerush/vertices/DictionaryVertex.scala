@@ -81,27 +81,31 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     }
   }
   
-  def varToValue(query: Array[Int], index: Int): Option[String] = {
+  def varToValue(query: Array[Int], index: Int): Option[Int] = {
     val varValue = if (index > 0) index else query.getVariable(index) // else also includes index=0
     if (varValue > 0) 
-     Some(d.get(varValue))
+     Some(d.get(varValue).toInt)
     else None
   }
   
+  /**
+   * Get real values from the dictionary. lhs and rhs might be variables or literal
+   * integers. None is returned if a variable is not bound.
+   */
+  def getRealValues(query: Array[Int], filter: FilterTriple): (Option[Int], Option[Int]) = {
+    (
+     if(filter.lhsIsVar) varToValue(query, filter.lhs) else Some(filter.lhs),
+     if(filter.rhsIsVar) varToValue(query, filter.rhs) else Some(filter.rhs)
+    )
+  }
+  
   def passesFilter(query: Array[Int], filterIndex: Int): Boolean = {
-    // Assumption for right now is that lhs is a var
-    // and rhs is a constant int
     val filter = query.filter(filterIndex)
-    if (0 < filter.comparator && filter.comparator <= 6) {
-      val rhsValue = varToValue(query, filter.entry)
-      if (rhsValue.isDefined) {
-        val result = arithmeticFilter(rhsValue.get.toInt, filter.intToOperator, filter.value)
-        if (result) query.removeFilter(filterIndex)
-        else println("DID NOT PASS") // < TODO remove
-        return result
-      }
-      else {
-        return true
+    val rawComparator = filter.comparatorNoFlags
+    if (0 < rawComparator && rawComparator <= 6) {
+      val (lhsVal, rhsVal) = getRealValues(query, filter)
+      if (lhsVal.isDefined && rhsVal.isDefined) {
+        return arithmeticFilter(lhsVal.get, filter.intToOperator, rhsVal.get)
       }
     }
     return true
