@@ -34,7 +34,7 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       	WHERE {
           <http://a> <http://p> ?A .
           ?A ?T ?B
-          FILTER(14 != ?B)
+          FILTER(?B > 14)
         }"""
       
       val query = Sparql(queryString).get

@@ -124,12 +124,21 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
     }
   }
   
-  val patternOrFilter: Parser[List[ParsedPattern]] = {
-    rep1sep(pattern, ".") | filterRepetition
-  }
-  
   val patternRepetition: Parser[List[ParsedPattern]] = {
     rep1sep(pattern, ".") <~ opt(".")
+  }
+  
+  val patternOrFilter: Parser[List[ParsedPattern]] = {
+    // The line below is the culprit...
+    patternRepetition | filterRepetition
+    
+    // OptimizerTestSimple will parse fine if | is replaced with ~
+    // as demonstrated with the commented out code here below
+    // (instead of the one above)
+//    patternRepetition ~ filterRepetition ^^ {
+//      case p ~ f =>
+//        f ++ p
+//    }
   }
   
   val filterRepetition: Parser[List[ParsedPattern]] = {
@@ -137,18 +146,9 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   }
 
   val patternList: Parser[List[ParsedPattern]] = {
-    ("{" ~> (rep1sep(pattern, ".") ~ opt(filterSpec)) <~ opt(".")) <~ "}" ^^ {
-      case patterns ~ filterSpec =>
-        if (filterSpec.isDefined) {
-          patterns ++ filterSpec
-        }
-        else {
-          patterns
-        }
+    "{" ~> rep1(patternOrFilter) <~ "}" ^^ {
+      _.flatten
     }
-//    "{" ~> rep1(patternOrFilter) <~ "}" ^^ {
-//      _.flatten
-//    }
   }
 
   val unionOfPatternLists: Parser[List[Seq[ParsedPattern]]] = {
