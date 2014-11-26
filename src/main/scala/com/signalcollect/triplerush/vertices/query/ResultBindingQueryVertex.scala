@@ -35,9 +35,8 @@ class ResultBindingQueryVertex(
   tickets: Long,
   resultPromise: Promise[Traversable[Array[Int]]],
   statsPromise: Promise[Map[Any, Any]],
-  optimizer: Option[Optimizer],
-  filters: Seq[FilterTriple])
-  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, tickets, numberOfSelectVariables, optimizer, filters) {
+  optimizer: Option[Optimizer])
+  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, tickets, numberOfSelectVariables, optimizer) {
    
   final val id = QueryIds.embedQueryIdInLong(QueryIds.nextQueryId)
   

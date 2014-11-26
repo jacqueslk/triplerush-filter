@@ -39,8 +39,7 @@ abstract class AbstractQueryVertex[StateType](
   val query: Seq[TriplePattern],
   val tickets: Long,
   val numberOfSelectVariables: Int,
-  val optimizer: Option[Optimizer],
-  val filters: Seq[FilterTriple]) extends BaseVertex[StateType] {
+  val optimizer: Option[Optimizer]) extends BaseVertex[StateType] {
 
   val numberOfPatternsInOriginalQuery: Int = query.length
 

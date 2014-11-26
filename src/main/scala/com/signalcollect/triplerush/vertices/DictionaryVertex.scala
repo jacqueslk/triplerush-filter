@@ -85,7 +85,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   def varToValue(query: Array[Int], index: Int): Option[Int] = {
     val varValue = if (index > 0) index else query.getVariable(index) // else also includes index=0
     if (varValue > 0) 
-     Some(d.get(varValue).toInt)
+     None//Some(d.get(varValue).toInt)
     else None
   }
   

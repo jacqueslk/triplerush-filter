@@ -114,7 +114,7 @@ case class Sparql(
   protected def fullEncodedResultIterator: Iterator[Array[Int]] = {
     val iterators = encodedPatternUnions.map {
       patterns =>
-        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables), filters=filters)
+        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables))
     }
     iterators.reduce(_ ++ _)
   }

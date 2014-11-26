@@ -31,9 +31,8 @@ class ResultIteratorQueryVertex(
   numberOfSelectVariables: Int,
   tickets: Long,
   resultIterator: ResultIterator,
-  optimizer: Option[Optimizer],
-  filters: Seq[FilterTriple])
-  extends AbstractQueryVertex[ResultIterator](query, tickets, numberOfSelectVariables, optimizer, filters) {
+  optimizer: Option[Optimizer])
+  extends AbstractQueryVertex[ResultIterator](query, tickets, numberOfSelectVariables, optimizer) {
 
   final val id = QueryIds.embedQueryIdInLong(QueryIds.nextQueryId)
 
