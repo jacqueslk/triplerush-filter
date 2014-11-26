@@ -111,14 +111,14 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   }
   
   val pattern: Parser[ParsedPattern] = {
-    variableOrBound ~! (a | variableOrBound) ~! variableOrBound ^^ {
+    variableOrBound ~ (a | variableOrBound) ~ variableOrBound ^^ {
       case s ~ p ~ o =>
         ParsedPattern(s, p, o, false)
     }
   }
   
   val filterSpec: Parser[ParsedPattern] = {
-    filter ~> ("(" ~> variableOrBound ~ arithmeticOperator ~ variableOrBound) <~ ")"  ^^ {
+    "FILTER(" ~> variableOrBound ~ arithmeticOperator ~ variableOrBound <~ ")"  ^^ {
       case s ~ p ~ o =>
         ParsedPattern(s, StringLiteral(p), o, true) 
     }
@@ -129,16 +129,7 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   }
   
   val patternOrFilter: Parser[List[ParsedPattern]] = {
-    // The line below is the culprit...
     patternRepetition | filterRepetition
-    
-    // OptimizerTestSimple will parse fine if | is replaced with ~
-    // as demonstrated with the commented out code here below
-    // (instead of the one above)
-//    patternRepetition ~ filterRepetition ^^ {
-//      case p ~ f =>
-//        f ++ p
-//    }
   }
   
   val filterRepetition: Parser[List[ParsedPattern]] = {

@@ -48,9 +48,9 @@ trait Forwarding[State] extends IndexVertex[State] {
       // Take a shortcut and don't actually do the forwarding, just send the cardinality.
       // The isSimpleToBind check excludes complicated cases, where a binding might fail.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-      println("=== ROOT ===")
+//      println("=== ROOT ===")
       val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
-      println("processQuery: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
+//      println("processQuery: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
       graphEditor.sendSignal(cardinality, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
@@ -65,8 +65,8 @@ trait Forwarding[State] extends IndexVertex[State] {
       //println("processQuery: " + aboveAverageTicketQuery.mkString(", "))
       def sendTo(childDelta: Int) {
         val routingAddress = nextRoutingAddress(childDelta)
-        val eip = new EfficientIndexPattern(routingAddress).toTriplePattern
-        println("... Routing address: " + eip + " (child delta: " + childDelta + ")")
+//        val eip = new EfficientIndexPattern(routingAddress).toTriplePattern
+//        println("... Routing address: " + eip + " (child delta: " + childDelta + ")")
 
         if (extras > 0) {
           extras -= 1
@@ -88,9 +88,9 @@ trait Forwarding[State] extends IndexVertex[State] {
       // Take a shortcut and don't actually do the forwarding, just send the cardinality.
       // The isSimpleToBind check excludes complicated cases, where a binding might fail.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-      println("=== ROOT ===")
-      val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
-      println("checkDictionary: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
+//      println("=== ROOT ===")
+//      val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
+//      println("checkDictionary: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
       graphEditor.sendSignal(cardinality, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {

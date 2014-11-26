@@ -96,37 +96,37 @@ abstract class IndexVertex[State](val id: Long)
 //      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
 //      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
     }
-    else {
-      val eip = new EfficientIndexPattern(id).toTriplePattern
-      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
-    }
+//    else {
+//      val eip = new EfficientIndexPattern(id).toTriplePattern
+//      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
+//    }
     // End output code ----------
     
     signal match {
       case query: Array[Int] =>
-        println("Deliver Array[Int]: " + query.mkString(", "))
+//        println("Deliver Array[Int]: " + query.mkString(", "))
         checkDictionary(query, graphEditor)
       case filter: FilterRequest =>
-        println("Deliver FilterRequest: " + filter.query.mkString(", "))
+//        println("Deliver FilterRequest: " + filter.query.mkString(", "))
         processQuery(filter.query, graphEditor)
       case response: FilterResponse =>
-        println("Deliver FilterResponse: " + response.query.mkString(", "))
+//        println("Deliver FilterResponse: " + response.query.mkString(", "))
         processQuery(response.query, graphEditor)
       case cr: CardinalityRequest =>
-        val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
-        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip)
+//        val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
+//        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip)
         handleCardinalityRequest(cr, graphEditor)
       case ChildIdRequest(requestor) =>
-        println("ChildIdRequest: " + requestor)
+//        println("ChildIdRequest: " + requestor)
         handleChildIdRequest(requestor, graphEditor)
       case cardinalityIncrement: Int =>
-        println("cardinalityIncrement: " + cardinalityIncrement)
+//        println("cardinalityIncrement: " + cardinalityIncrement)
         handleCardinalityIncrement(cardinalityIncrement)
       case count: ObjectCountSignal =>
-        println("objectCountSignal: " + count)
+//        println("objectCountSignal: " + count)
         handleObjectCount(count)
       case count: SubjectCountSignal =>
-        println("subjectCountSignal: " + count)
+//        println("subjectCountSignal: " + count)
         handleSubjectCount(count)
       case other => throw new Exception(s"Unexpected signal @ $id: $other")
     }

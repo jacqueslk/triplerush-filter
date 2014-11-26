@@ -66,7 +66,7 @@ trait Binding
     if (sendToDictionary) {
       val indexInfo = new EfficientIndexPattern(id)
       val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
-      println("... sending to dictionary")
+//      println("... sending to dictionary")
       graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
     }
     else {
@@ -81,7 +81,7 @@ trait Binding
       // Take a shortcut and don't actually do the binding, just send the result count.
       // The isSimpleToBind check excludes complicated cases, where a binding might fail.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-      println(s"Send edge count = $edgeCount to query vertex ID")
+//      println(s"Send edge count = $edgeCount to query vertex ID")
       graphEditor.sendSignal(edgeCount, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
@@ -110,11 +110,11 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
-    println("handleQueryBinding: " + query.mkString(", ") + s"; childDelta = $childDelta")
+//    println("handleQueryBinding: " + query.mkString(", ") + s"; childDelta = $childDelta")
     if (boundParticle != null) {
       routeSuccessfullyBound(boundParticle, graphEditor)
     } else {
-      println("Could not bind")
+//      println("Could not bind")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
@@ -125,13 +125,13 @@ trait Binding
     boundParticle: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
 
-    println("routeSuccessfullyBound: boundParticle=" + boundParticle.mkString(", "))
+//    println("routeSuccessfullyBound: boundParticle=" + boundParticle.mkString(", "))
     
     if (boundParticle.isResult) {
       // Query successful, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
-      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
-      println(s"is result; send tickets to $eip")
+//      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
+//      println(s"is result; send tickets to $eip")
       if (boundParticle.isBindingQuery) {
         graphEditor.sendSignal(boundParticle, queryVertexId)
       } else {
@@ -140,7 +140,7 @@ trait Binding
       }
     } else {
       val eip = new EfficientIndexPattern(boundParticle.routingAddress).toTriplePattern
-      println(s"NOT result; sending boundParticle to $eip")
+//      println(s"NOT result; sending boundParticle to $eip")
       graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
     }
   }
