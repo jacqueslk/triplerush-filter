@@ -107,16 +107,13 @@ object QueryParticle {
     patterns: Seq[TriplePattern],
     queryId: Int,
     numberOfSelectVariables: Int,
-    filters: Seq[FilterTriple] = Seq(),
     tickets: Long = Long.MaxValue): Array[Int] = {
-    // 5 = query ID, tickets (2), # select vars, # filters
-    val ints = 5 + numberOfSelectVariables + 3 * filters.length + 3 * patterns.length
+    val ints = 4 + numberOfSelectVariables + 3 * patterns.length
     val r = new Array[Int](ints)
     r.writeQueryId(queryId)
     r.writeNumberOfBindings(numberOfSelectVariables)
     r.writeTickets(tickets)
     r.writePatterns(patterns)
-    r.writeFilters(filters)
     r
   }
 
@@ -130,8 +127,6 @@ object QueryParticle {
  * 1-2 long:   tickets (long encoded as 2 ints)
  * 3 int:    numberOfBindings
  * 4-? ints:   bindings
- * x int: numberOfFilters
- * x x*3 ints: filters 
  * ? ?*3 ints: triple patterns in reverse matching order (last one
  *           gets matched first).
  */
@@ -289,7 +284,7 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     b
   }
 
-  def isResult = r.length == 5 + numberOfBindings + numberOfFilters*3 // TODO handle filters differently?
+  def isResult = r.length == 4 + numberOfBindings
 
   def queryId: Int = r(0)
 
@@ -305,15 +300,9 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
   }
 
   def numberOfBindings: Int = r(3)
-  
-  def numberOfFilters: Int = r(numberOfBindings + 4)
 
   def writeNumberOfBindings(numberOfBindings: Int) {
     r(3) = numberOfBindings
-  }
-  
-  def writeNumberOfFilters(numberOfFilters: Int) {
-    r(numberOfBindings + 4) = numberOfFilters
   }
 
   def writeBindings(bindings: Seq[Int]) {
@@ -344,21 +333,6 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     while (i < unmatched.length) {
       writePattern(tpByteIndex, unmatched(i))
       tpByteIndex -= 3
-      i += 1
-    }
-  }
-  
-  // Write filter information to query particle
-  // can only be done once binding information is present
-  def writeFilters(filters: Seq[FilterTriple]) {
-    // Index holding # filters
-    val filterNrIndex = 4 + numberOfBindings
-    r(filterNrIndex) = filters.length
-    var i = 0
-    while (i < filters.length) {
-      r(filterNrIndex + i*3 + 1) = filters(i).lhs
-      r(filterNrIndex + i*3 + 2) = filters(i).comparator
-      r(filterNrIndex + i*3 + 3) = filters(i).rhs
       i += 1
     }
   }
@@ -402,23 +376,10 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
   def numberOfPatterns: Int = (r.length - 4 - numberOfBindings) / 3
 
   def pattern(index: Int) = {
-    val sIndex = 3 * index + 5 + numberOfBindings + numberOfFilters * 3
+    val sIndex = 3 * index + 4 + numberOfBindings
     val pIndex = sIndex + 1
     val oIndex = sIndex + 2
     TriplePattern(r(sIndex), r(pIndex), r(oIndex))
-  }
-  
-  def filter(index: Int): FilterTriple = {
-    val filterOffset = 5 + numberOfBindings + index * 3
-    FilterTriple(r(filterOffset), r(filterOffset+1), r(filterOffset+2))
-  }
-  
-  def removeFilter(index: Int) {
-    // Set fields to 0 to denote them as "useless"
-    val startIndex = 3 * index + 5 + numberOfBindings
-    r(startIndex)   = 0
-    r(startIndex+1) = 0
-    r(startIndex+2) = 0
   }
 
   def lastPattern: TriplePattern = {

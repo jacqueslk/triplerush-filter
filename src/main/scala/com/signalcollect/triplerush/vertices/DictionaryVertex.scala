@@ -41,21 +41,22 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   def checkAllFilters(query: Array[Int]): Boolean = {
-    object AllDone extends Exception { }
-
-    var i = 0
-    var filterResult = true
-    try {
-      for (i <- 0 until query.numberOfFilters)
-        if (!passesFilter(query, i)) {
-         filterResult = false;
-         throw AllDone
-        }
-    } catch {
-      case AllDone => // break equivalent in Scala
-    }
-    
-    filterResult    
+    true
+//    object AllDone extends Exception { }
+//
+//    var i = 0
+//    var filterResult = true
+//    try {
+//      for (i <- 0 until query.numberOfFilters)
+//        if (!passesFilter(query, i)) {
+//         filterResult = false;
+//         throw AllDone
+//        }
+//    } catch {
+//      case AllDone => // break equivalent in Scala
+//    }
+//    
+//    filterResult    
   }
   
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
@@ -100,15 +101,16 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   def passesFilter(query: Array[Int], filterIndex: Int): Boolean = {
-    val filter = query.filter(filterIndex)
-    val rawComparator = filter.comparatorNoFlags
-    if (0 < rawComparator && rawComparator <= 6) {
-      val (lhsVal, rhsVal) = getRealValues(query, filter)
-      if (lhsVal.isDefined && rhsVal.isDefined) {
-        return arithmeticFilter(lhsVal.get, filter.intToOperator, rhsVal.get)
-      }
-    }
-    return true
+    true
+//    val filter = query.filter(filterIndex)
+//    val rawComparator = filter.comparatorNoFlags
+//    if (0 < rawComparator && rawComparator <= 6) {
+//      val (lhsVal, rhsVal) = getRealValues(query, filter)
+//      if (lhsVal.isDefined && rhsVal.isDefined) {
+//        return arithmeticFilter(lhsVal.get, filter.intToOperator, rhsVal.get)
+//      }
+//    }
+//    return true
   }
   
   def arithmeticFilter(lhs: Int, comparator: String, rhs: Int): Boolean = {
