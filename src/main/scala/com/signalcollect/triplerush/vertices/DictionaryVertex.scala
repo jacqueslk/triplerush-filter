@@ -1,6 +1,6 @@
 package com.signalcollect.triplerush.vertices
 
-import scala.util.Random
+import scala.collection.mutable.HashMap
 import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.FilterResponse
 import com.signalcollect.triplerush.FilterRequest
@@ -16,9 +16,9 @@ import com.signalcollect.util.SplayIntSet
 
 final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
-  val random = new Random();
-  
   val d = TrGlobal.dictionary
+  
+  val filterList = HashMap.empty[Int, Seq[FilterTriple]];
 
   def nextRoutingAddress(childDelta: Int): Long = 0
   
@@ -38,6 +38,15 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     checkAndForward(query, graphEditor)
+  }
+  
+  override def registerFilters(queryId: Int, filterList: Seq[FilterTriple]) {
+    println(s"Registering $filterList to query ID $queryId")
+    this.filterList(queryId) = filterList
+  }
+  
+  def removeFilterList(queryId: Int) {
+    filterList -= queryId
   }
   
   def checkAllFilters(query: Array[Int]): Boolean = {

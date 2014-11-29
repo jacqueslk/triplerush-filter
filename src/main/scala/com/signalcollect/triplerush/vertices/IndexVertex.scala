@@ -25,8 +25,10 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.CardinalityReply
 import com.signalcollect.triplerush.CardinalityRequest
 import com.signalcollect.triplerush.ChildIdRequest
+import com.signalcollect.triplerush.FilterRegistration
 import com.signalcollect.triplerush.FilterResponse
 import com.signalcollect.triplerush.FilterRequest
+import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.ObjectCountSignal
 import com.signalcollect.triplerush.PlaceholderEdge
 import com.signalcollect.triplerush.SubjectCountSignal
@@ -68,6 +70,8 @@ abstract class IndexVertex[State](val id: Long)
   def handleSubjectCount(count: SubjectCountSignal) = {}
 
   def cardinality: Int
+  
+  def registerFilters(queryId: Int, filters: Seq[FilterTriple]) = {}
 
   /**
    * Default reply, is only overridden by SOIndex.
@@ -112,13 +116,15 @@ abstract class IndexVertex[State](val id: Long)
       case response: FilterResponse =>
 //        println("Deliver FilterResponse: " + response.query.mkString(", "))
         processQuery(response.query, graphEditor)
+      case fr: FilterRegistration =>
+        registerFilters(fr.queryId, fr.filters)
       case cr: CardinalityRequest =>
 //        val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
 //        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip)
         handleCardinalityRequest(cr, graphEditor)
       case ChildIdRequest(requestor) =>
 //        println("ChildIdRequest: " + requestor)
-        handleChildIdRequest(requestor, graphEditor)
+        handleChildIdRequest(requestor, graphEditor)        
       case cardinalityIncrement: Int =>
 //        println("cardinalityIncrement: " + cardinalityIncrement)
         handleCardinalityIncrement(cardinalityIncrement)

@@ -46,7 +46,7 @@ class QueryPlanningVertex(
   query: Seq[TriplePattern],
   plannerPromise: Promise[QueryPlanningResult],
   optimizer: Optimizer)
-  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, 0l, 0, Some(optimizer)) {
+  extends AbstractQueryVertex[ArrayOfArraysTraversable](query, 0l, 0, Seq(), Some(optimizer)) {
 
   final val id = QueryIds.embedQueryIdInLong(QueryIds.nextQueryId)
 

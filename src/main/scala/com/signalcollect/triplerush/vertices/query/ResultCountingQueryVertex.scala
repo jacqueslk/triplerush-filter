@@ -35,7 +35,7 @@ final class ResultCountingQueryVertex(
   tickets: Long,
   resultPromise: Promise[Option[Long]],
   optimizer: Option[Optimizer])
-  extends AbstractQueryVertex[Long](query, tickets, numberOfSelectVariables = 0, optimizer) {
+  extends AbstractQueryVertex[Long](query, tickets, numberOfSelectVariables = 0, Seq(), optimizer) {
 
   val id = QueryIds.embedQueryIdInLong(QueryIds.nextCountQueryId)
 

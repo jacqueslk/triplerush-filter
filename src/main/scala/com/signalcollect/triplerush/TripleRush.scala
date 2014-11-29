@@ -250,13 +250,15 @@ case class TripleRush(
     query: Seq[TriplePattern],
     optimizerOption: Option[Optimizer] = None,
     numberOfSelectVariables: Option[Int] = None,
+    filters: Seq[FilterTriple] = Seq(),
     tickets: Long = Long.MaxValue): Iterator[Array[Int]] = {
     assert(canExecute, "Call TripleRush.prepareExecution before executing queries.")
     val selectVariables = numberOfSelectVariables.getOrElse(
       VariableEncoding.requiredVariableBindingsSlots(query))
     val resultIterator = new ResultIterator
     val usedOptimizer = if (optimizerOption.isDefined) optimizerOption else optimizer
-    val queryVertex = new ResultIteratorQueryVertex(query, selectVariables, tickets, resultIterator, usedOptimizer)
+    val queryVertex = new ResultIteratorQueryVertex(query, selectVariables, tickets, resultIterator, usedOptimizer, filters)
+    
     graph.addVertex(queryVertex)
     resultIterator
   }

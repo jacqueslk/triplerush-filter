@@ -41,7 +41,7 @@ case class Sparql(
   variableNameToId: Map[String, Int] = Map.empty[String, Int],
   idToVariableName: IndexedSeq[String] = Vector(),
   isDistinct: Boolean = false,
-  filters: Seq[FilterTriple] = Seq(), // TODO -- represent FILTER unions!
+  filters: List[Seq[FilterTriple]],
   orderBy: Option[Int] = None,
   limit: Option[Int] = None) {
 
@@ -112,10 +112,16 @@ case class Sparql(
   // && orderBy == None && limit == None
 
   protected def fullEncodedResultIterator: Iterator[Array[Int]] = {
+    var cnt = -1;
     val iterators = encodedPatternUnions.map {
       patterns =>
-        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables))
+        cnt += 1
+        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables), filters.get(cnt))
     }
+//    val iterators: Iterator[Array[Int]] = encodedPatternUnions.zipWithIndex.foreach {
+//      case (patterns, index) =>
+//        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables))
+//    }
     iterators.reduce(_ ++ _)
   }
 
@@ -269,7 +275,7 @@ object Sparql {
           idToVariableName = idToVariableName,
           isDistinct = parsed.select.isDistinct,
           orderBy = select.orderBy.map(variableNameToId),
-          filters = encodedFilters(0), // arghhhh TODO --------
+          filters = encodedFilters,
           limit = select.limit))
     }
   }

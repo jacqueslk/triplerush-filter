@@ -24,6 +24,7 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.CardinalityCache
 import com.signalcollect.triplerush.CardinalityReply
 import com.signalcollect.triplerush.CardinalityRequest
+import com.signalcollect.triplerush.FilterRegistration
 import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.PredicateStatsCache
 import com.signalcollect.triplerush.PredicateStatsReply
@@ -39,6 +40,7 @@ abstract class AbstractQueryVertex[StateType](
   val query: Seq[TriplePattern],
   val tickets: Long,
   val numberOfSelectVariables: Int,
+  val filters: Seq[FilterTriple],
   val optimizer: Option[Optimizer]) extends BaseVertex[StateType] {
 
   val numberOfPatternsInOriginalQuery: Int = query.length
@@ -57,15 +59,19 @@ abstract class AbstractQueryVertex[StateType](
   var optimizingDuration = 0l
 
   override def afterInitialization(graphEditor: GraphEditor[Long, Any]) {
+    println("afterInitialization::AbstractQueryV")
 
     optimizingStartTime = System.nanoTime
     //TODO: Should we run an optimizer even for one-pattern queries?
+
     if (optimizer.isDefined && numberOfPatternsInOriginalQuery > 1) {
+      println(" .. optimizer defined and numberofpatsinorigqu")
       gatherStatistics(graphEditor)
     } else {
       // Dispatch the query directly.
       optimizingDuration = System.nanoTime - optimizingStartTime
       if (numberOfPatternsInOriginalQuery > 0) {
+        println(" .. numberOfPattInOrigQ > 0")
         val particle = QueryParticle(
           patterns = query,
           queryId = QueryIds.extractQueryIdFromLong(id),
@@ -76,6 +82,7 @@ abstract class AbstractQueryVertex[StateType](
       } else {
         dispatchedQuery = None
         // All stats processed, but no results, we can safely remove the query vertex now.
+        println(" .. else")
         reportResultsAndRequestQueryVertexRemoval(graphEditor)
       }
     }
@@ -185,9 +192,11 @@ abstract class AbstractQueryVertex[StateType](
     if (queryMightHaveResults) {
       dispatchedQuery = optimizeQuery
       if (dispatchedQuery.isDefined) {
+        println(".... handlequerydispatch: dispatchedQ.isDefined")
         graphEditor.sendSignal(
           dispatchedQuery.get,
           dispatchedQuery.get.routingAddress)
+        graphEditor.sendSignal(FilterRegistration(13, filters), Long.MaxValue)
       } else {
         reportResultsAndRequestQueryVertexRemoval(graphEditor)
       }
