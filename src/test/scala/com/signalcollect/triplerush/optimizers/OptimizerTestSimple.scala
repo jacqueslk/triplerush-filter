@@ -33,6 +33,7 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
         SELECT ?T ?A ?B
       	WHERE {
           <http://a> <http://p> ?A .
+          FILTER(7 > 10)
           ?A ?T ?B
           FILTER(?B < 17)
         }"""

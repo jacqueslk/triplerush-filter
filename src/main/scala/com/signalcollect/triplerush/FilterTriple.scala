@@ -49,4 +49,34 @@ case class FilterTriple(lhs: Int, comparator: Int, rhs: Int) {
    def isNegated: Boolean = (comparator & 0x20000000) == 0x20000000
    
    def comparatorNoFlags: Int = (comparator & 0x1ffffff)
+   
+   def isArithmeticFilter: Boolean = (1 <= comparator && comparator <= 6)
+   
+   def passes(lhsVal: Option[Int] = None, rhsVal: Option[Int] = None): Boolean = {
+     // Ensure that we have the values we need for the variables
+     if (lhsIsVar && !lhsVal.isDefined || rhsIsVar && !rhsVal.isDefined) {
+       throw new Exception("Variables without values encountered!")
+     }
+     if (isArithmeticFilter) {
+       return arithmeticFilter(lhsVal, rhsVal)
+     }
+     else {
+       throw new Exception("Unknown filter type!")
+     }
+   }
+   
+   def arithmeticFilter(lhsVal: Option[Int] = None, rhsVal: Option[Int] = None): Boolean = {
+     val lhs = if(lhsVal.isDefined) lhsVal.get else this.lhs
+     val rhs = if(rhsVal.isDefined) rhsVal.get else this.rhs
+    
+    comparator match {
+      case 1 =>  lhs == rhs
+      case 2 =>  lhs >  rhs
+      case 3 =>  lhs <  rhs
+      case 4 =>  lhs != rhs
+      case 5 =>  lhs >= rhs
+      case 6 =>  lhs <= rhs
+      case _ => throw new Exception(s"Unknown operator $comparator")
+    }
+  }
 }

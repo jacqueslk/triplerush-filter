@@ -40,9 +40,35 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     checkAndForward(query, graphEditor)
   }
   
-  override def registerFilters(queryId: Int, filterList: Seq[FilterTriple]) {
-    println(s"Registering $filterList to query ID $queryId")
-    this.filterList(queryId) = filterList
+  override def registerFilters(queryId: Int, queryFilters: Seq[FilterTriple]) {
+    println(s"DV::registerFilters: Registering $queryFilters to query ID $queryId")
+    filterList(queryId) = queryFilters
+    checkNoVarFilters(queryId)
+  }
+  
+  /**
+   * Check filters with no variables (i.e. filters that can be
+   * checked at the beginning) and remove them from the list
+   */
+  def checkNoVarFilters(queryId: Int): Boolean = {
+    println("DV::checkNoVarFilters")
+    var i = 0
+    for (i <- 0 until filterList(queryId).length) {
+      val filterToCheck = filterList(queryId)(i)
+      if (!filterToCheck.lhsIsVar && !filterToCheck.rhsIsVar) {
+        println(s"... checking $filterToCheck")
+        if (!filterToCheck.passes(None, None)) {
+          println("..... filter did NOT pass!")
+          return false
+        }
+        removeFilterFromList(queryId, i)
+      }
+    }
+    true
+  }
+  
+  private def removeFilterFromList(queryId: Int, index: Int) {
+    filterList(queryId) = filterList(queryId).take(index-1) ++ filterList(queryId).drop(index)
   }
   
   def removeFilterList(queryId: Int) {
@@ -50,22 +76,13 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   def checkAllFilters(query: Array[Int]): Boolean = {
+    var i = 0
+    for (i <- 0 until filterList(query.queryId).length) {
+      if (!passesFilter(query, i)) {
+       return false
+      }
+    }
     true
-//    object AllDone extends Exception { }
-//
-//    var i = 0
-//    var filterResult = true
-//    try {
-//      for (i <- 0 until query.numberOfFilters)
-//        if (!passesFilter(query, i)) {
-//         filterResult = false;
-//         throw AllDone
-//        }
-//    } catch {
-//      case AllDone => // break equivalent in Scala
-//    }
-//    
-//    filterResult    
   }
   
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
@@ -120,19 +137,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
 //      }
 //    }
 //    return true
-  }
-  
-  def arithmeticFilter(lhs: Int, comparator: String, rhs: Int): Boolean = {
-    println(s"DictionaryVertex::arithmeticFilter: $lhs $comparator $rhs")
-    comparator match {
-      case "="   =>  lhs == rhs
-      case ">"   =>  lhs >  rhs
-      case "<"   =>  lhs <  rhs
-      case "!="  =>  lhs != rhs
-      case ">="  =>  lhs >= rhs
-      case "<="  =>  lhs <= rhs
-      case _     => throw new Exception(s"Unknown operator $comparator")
-    }
   }
   
 }
