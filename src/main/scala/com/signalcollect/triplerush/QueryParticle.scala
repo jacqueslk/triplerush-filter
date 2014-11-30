@@ -365,8 +365,8 @@ class QueryParticle(val r: Array[Int]) extends AnyVal {
     for (i <- numberOfPatterns - 1 to 0 by -1) yield pattern(i)
   }
   
-  def getVariable(index: Int): Int = {
-    val posIndex = -index
+  def getBinding(index: Int): Int = {
+    val posIndex = if(index < 0) -index else index
     if (posIndex <= numberOfBindings && posIndex > 0)
       r(3+posIndex)
     else

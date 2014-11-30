@@ -20,11 +20,11 @@
 
 package com.signalcollect.triplerush.vertices
 
+import scala.collection.mutable.ListBuffer
 import com.signalcollect.Edge
 import com.signalcollect.GraphEditor
-import com.signalcollect.triplerush.EfficientIndexPattern // <-- DEBUG Lucas #
+import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
-import com.signalcollect.triplerush.FilterRequest
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
 
@@ -99,37 +99,64 @@ trait Binding
     val boundParticle = bindIndividualQuery(childDelta, query)
     println("handleQueryBinding: result = " + boundParticle.mkString(", ") + s"; childDelta = $childDelta")
     if (boundParticle != null) {
-      routeSuccessfullyBound(boundParticle, graphEditor)
+      val newBinds = findNewBindings(query, boundParticle)
+      routeSuccessfullyBound(boundParticle, newBinds, graphEditor)
     } else {
-      println("Could not bind")
+//      println("Could not bind")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     }
   }
+  
+  def findNewBindings(oldParticle: Array[Int], newParticle: Array[Int]): Seq[Int] = {
+    val newBindings = ListBuffer[Int]()
+    for (i <- 1 until oldParticle.numberOfBindings) {
+      if (oldParticle.getBinding(i) != newParticle.getBinding(i)) {
+        newBindings += i
+      }
+    }
+    newBindings
+  }
 
   def routeSuccessfullyBound(
     boundParticle: Array[Int],
+    newBindings: Seq[Int],
     graphEditor: GraphEditor[Long, Any]) {
 
 //    println("routeSuccessfullyBound: boundParticle=" + boundParticle.mkString(", "))
-    
-    if (boundParticle.isResult) {
-      // Query successful, send to query vertex.
+    if (boundParticle.isResult && !boundParticle.isBindingQuery) {
       val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
-//      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
-//      println(s"is result; send tickets to $eip")
-      if (boundParticle.isBindingQuery) {
-        graphEditor.sendSignal(boundParticle, queryVertexId)
-      } else {
-        graphEditor.sendSignal(1, queryVertexId)
-        graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
-      }
-    } else {
-      val eip = new EfficientIndexPattern(boundParticle.routingAddress).toTriplePattern
-//      println(s"NOT result; sending boundParticle to $eip")
-      graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
+      graphEditor.sendSignal(1, queryVertexId)
+      graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
     }
+    else {
+      val destination = if(boundParticle.isResult) QueryIds.embedQueryIdInLong(boundParticle.queryId)
+                                              else boundParticle.routingAddress
+      import Array.concat
+      val destInfo = new EfficientIndexPattern(destination) 
+      val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
+//      val queryWithMetaInfo = boundParticle :+ destInfo.extractFirst :+ destInfo.extractSecond
+      println("queryWMetaInfo: " + queryWithMetaInfo.mkString(" "))
+      graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+    }
+
+//    if (boundParticle.isResult) {
+//      // Query successful, send to query vertex.
+//      val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
+////      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
+////      println(s"is result; send tickets to $eip")
+//      if (boundParticle.isBindingQuery) {
+//        graphEditor.sendSignal(boundParticle, queryVertexId)
+//      } else {
+//        graphEditor.sendSignal(1, queryVertexId)
+//        graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
+//      }
+//    } else {
+////      val eip = new EfficientIndexPattern(boundParticle.routingAddress).toTriplePattern
+////      println(s"NOT result; sending boundParticle to $eip")
+//      graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
+//    }
   }
 
 }

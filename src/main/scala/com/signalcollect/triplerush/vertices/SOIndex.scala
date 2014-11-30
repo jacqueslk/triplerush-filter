@@ -65,7 +65,8 @@ final class SOIndex(id: Long) extends SearchableIndexVertex(id)
     if (patternP > 0 && query.lastPatternS > 0 && query.lastPatternO > 0) {
       // We are looking for a specific, fully bound triple pattern. This means that we have to do a binary search on the targetIds.
       if (childIdsContain(patternP)) {
-        routeSuccessfullyBound(query.copyWithoutLastPattern, graphEditor)
+        // TODO --- do we need to change something here for filters?
+        routeSuccessfullyBound(query.copyWithoutLastPattern, Seq(), graphEditor)
       } else {
         // Failed query
         val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)

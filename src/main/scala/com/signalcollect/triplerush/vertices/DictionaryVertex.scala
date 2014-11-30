@@ -3,7 +3,6 @@ package com.signalcollect.triplerush.vertices
 import scala.collection.mutable.HashMap
 import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.FilterResponse
-import com.signalcollect.triplerush.FilterRequest
 import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
@@ -68,7 +67,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
           result = false
         }
         removeFilterFromList(queryId, i)
-        i -= 1
+        i -= 1 // compensate for filter being removed
       }
       i += 1
     }
@@ -90,7 +89,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * Check all possible filters with the given information.
    */
   def checkAllFilters(query: Array[Int]): Boolean = {
-    var i = 0
+   // var i = 0
     for (i <- 0 until filterList(query.queryId).length) {
       if (!passesFilter(query, i)) {
        return false
@@ -99,11 +98,25 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     true
   }
   
+  /**
+   * Processes a query particle for all relevant filters and then
+   * forwards it to its next destination if the filters pass
+   * The query particle has added information at the end:
+   *  [query particle] + [new variables that are bound] + [number of newly bounded variables] 
+   *   + [destination as long in two int fields]
+   */
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     
     if (checkAllFilters(query)) {
+      println(s"DictionaryVertex::checkAndForward query=" + query.mkString(" "))
       val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
-      val filterResponse = FilterResponse(query.dropRight(2))
+      val numberOfNewBindings = query(query.length-3)
+      val newBindings = query.takeRight(numberOfNewBindings+3).dropRight(3)
+      
+      val filterResponse = query.dropRight(newBindings.length + 3)
+//       val filterResponse = query.dropRight(2)
+      println(s"... newBindings = " + newBindings.mkString(" "))
+      println(s"... filterResponse = " + filterResponse)
       
       val eip = new EfficientIndexPattern(destination).toTriplePattern
       println("Passed filter; sending to " + destination + " (= " + eip + ")")
@@ -120,14 +133,14 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   def varToValue(query: Array[Int], index: Int): Option[Int] = {
-    val varValue = if (index > 0) index else query.getVariable(index) // else also includes index=0
+    val varValue = if (index > 0) index else query.getBinding(index) // else also includes index=0
     if (varValue > 0) 
      None//Some(d.get(varValue).toInt)
     else None
   }
   
   /**
-   * Get real values from the dictionary. lhs and rhs might be variables or literal
+   * Gets real values from the dictionary. lhs and rhs might be variables or literal
    * integers. None is returned if a variable is not bound.
    */
   def getRealValues(query: Array[Int], filter: FilterTriple): (Option[Int], Option[Int]) = {
