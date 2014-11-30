@@ -59,20 +59,6 @@ trait Binding
   def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     bindQueryToAllTriples(query, graphEditor)
   }
-  
-  override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    val sendToDictionary = false // TODO determine when there's a filter check
-    //println("checkDictionary: query=" + query.mkString(", "))
-    if (sendToDictionary) {
-      val indexInfo = new EfficientIndexPattern(id)
-      val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
-//      println("... sending to dictionary")
-      graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
-    }
-    else {
-      processQuery(query, graphEditor)
-    }
-  }
 
   def bindQueryToAllTriples(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     if (!query.isBindingQuery &&
@@ -85,6 +71,7 @@ trait Binding
       graphEditor.sendSignal(edgeCount, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
+      println(s"bindQueryToAllTriples for $query")
       val edges = edgeCount
       val totalTickets = query.tickets
       val absoluteValueOfTotalTickets = if (totalTickets < 0) -totalTickets else totalTickets  // inlined math.abs
@@ -110,11 +97,11 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
-//    println("handleQueryBinding: " + query.mkString(", ") + s"; childDelta = $childDelta")
+    println("handleQueryBinding: result = " + boundParticle.mkString(", ") + s"; childDelta = $childDelta")
     if (boundParticle != null) {
       routeSuccessfullyBound(boundParticle, graphEditor)
     } else {
-//      println("Could not bind")
+      println("Could not bind")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)

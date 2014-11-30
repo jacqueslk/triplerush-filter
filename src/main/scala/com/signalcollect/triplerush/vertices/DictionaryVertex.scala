@@ -20,6 +20,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   val filterList = HashMap.empty[Int, Seq[FilterTriple]];
 
+  
   def nextRoutingAddress(childDelta: Int): Long = 0
   
   def addChildDelta(delta: Int): Boolean = false
@@ -28,15 +29,9 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   def foreachChildDelta(f: Int => Unit): Unit = { }
   
-  def handleChildIdRequest(requestor: Long, graphEditor: GraphEditor[Long, Any]): Unit = {
-    
-  }
+  def handleChildIdRequest(requestor: Long, graphEditor: GraphEditor[Long, Any]): Unit = { }
 
   override def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    // Nothing to do here
-  }
-  
-  override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     checkAndForward(query, graphEditor)
   }
   
@@ -71,10 +66,13 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     filterList(queryId) = filterList(queryId).take(index-1) ++ filterList(queryId).drop(index)
   }
   
-  def removeFilterList(queryId: Int) {
+  def removeFilters(queryId: Int) {
     filterList -= queryId
   }
   
+  /**
+   * Check all possible filters with the given information.
+   */
   def checkAllFilters(query: Array[Int]): Boolean = {
     var i = 0
     for (i <- 0 until filterList(query.queryId).length) {
@@ -86,9 +84,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    println(">> This is the Dictionary Vertex <<")
-    
-
     
     if (checkAllFilters(query)) {
       val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))

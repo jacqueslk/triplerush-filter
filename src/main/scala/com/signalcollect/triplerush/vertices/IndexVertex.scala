@@ -60,8 +60,6 @@ abstract class IndexVertex[State](val id: Long)
   def addChildDelta(delta: Int): Boolean
 
   def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any])
-  
-  def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any])
 
   def handleCardinalityIncrement(i: Int) = {}
 
@@ -94,24 +92,27 @@ abstract class IndexVertex[State](val id: Long)
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
     // Temp code for output ---------
     if (id != DICTIONARY_ID) {
-//      val infoS = expose("Subject")  .toString.replace("http://", "")
-//      val infoP = expose("Predicate").toString.replace("http://", "")
-//      val infoO = expose("Object")   .toString.replace("http://", "")
-//      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
-//      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
+      val infoS = expose("Subject")  .toString.replace("http://", "")
+      val infoP = expose("Predicate").toString.replace("http://", "")
+      val infoO = expose("Object")   .toString.replace("http://", "")
+      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
+      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
     }
-//    else {
-//      val eip = new EfficientIndexPattern(id).toTriplePattern
-//      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
-//    }
+    else {
+      val eip = new EfficientIndexPattern(id).toTriplePattern
+      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
+    }
     // End output code ----------
     
     signal match {
       case query: Array[Int] =>
 //        println("Deliver Array[Int]: " + query.mkString(", "))
-        checkDictionary(query, graphEditor)
+        processQuery(query, graphEditor)
       case filter: FilterRequest =>
 //        println("Deliver FilterRequest: " + filter.query.mkString(", "))
+        if (id != DICTIONARY_ID) {
+          throw new Exception(s"Unexpected filter request to id $id")
+        }
         processQuery(filter.query, graphEditor)
       case response: FilterResponse =>
 //        println("Deliver FilterResponse: " + response.query.mkString(", "))

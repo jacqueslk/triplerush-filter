@@ -49,8 +49,8 @@ trait Forwarding[State] extends IndexVertex[State] {
       // The isSimpleToBind check excludes complicated cases, where a binding might fail.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
 //      println("=== ROOT ===")
-      val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
-//      println("processQuery: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
+//      val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
+//      println("checkDictionary: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
       graphEditor.sendSignal(cardinality, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
@@ -67,7 +67,6 @@ trait Forwarding[State] extends IndexVertex[State] {
         val routingAddress = nextRoutingAddress(childDelta)
 //        val eip = new EfficientIndexPattern(routingAddress).toTriplePattern
 //        println("... Routing address: " + eip + " (child delta: " + childDelta + ")")
-
         if (extras > 0) {
           extras -= 1
           graphEditor.sendSignal(aboveAverageTicketQuery, routingAddress)
@@ -76,36 +75,6 @@ trait Forwarding[State] extends IndexVertex[State] {
         }
       }
       foreachChildDelta(sendTo)
-    }
-  }
-  
-  override def checkDictionary(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    if (!query.isBindingQuery &&
-      query.numberOfPatterns == 1 &&
-      query.isSimpleToBind &&
-      id != EfficientIndexPattern(0, 0, 0) // Cardinality stats for root node are not accurate.  
-      ) {
-      // Take a shortcut and don't actually do the forwarding, just send the cardinality.
-      // The isSimpleToBind check excludes complicated cases, where a binding might fail.
-      val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-//      println("=== ROOT ===")
-//      val debugAddr = new EfficientIndexPattern(queryVertexId).toTriplePattern
-//      println("checkDictionary: queryVertexId = " + queryVertexId + " (" + debugAddr + ")")
-      graphEditor.sendSignal(cardinality, queryVertexId)
-      graphEditor.sendSignal(query.tickets, queryVertexId)
-    } else {
-      val sendToDictionary = false // TODO determine when there's a filter check
-      
-      if (sendToDictionary) {
-        val indexInfo = new EfficientIndexPattern(id)
-        val queryWithAddr = query :+ indexInfo.extractFirst :+ indexInfo.extractSecond
-        //println("checkDictionary: go to dictionary. query = " + queryWithAddr.mkString(", "))
-        graphEditor.sendSignal(queryWithAddr, DICTIONARY_ID)
-      }
-      else {
-        //println("checkDictionary: call processQuery; query = " + query.mkString(", "))
-        processQuery(query, graphEditor)
-      }
     }
   }
 
