@@ -71,7 +71,7 @@ trait Binding
       graphEditor.sendSignal(edgeCount, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
-      println(s"bindQueryToAllTriples for $query")
+      println(s"bindQueryToAllTriples for " + query.mkString(" "))
       val edges = edgeCount
       val totalTickets = query.tickets
       val absoluteValueOfTotalTickets = if (totalTickets < 0) -totalTickets else totalTickets  // inlined math.abs
@@ -111,7 +111,7 @@ trait Binding
   
   def findNewBindings(oldParticle: Array[Int], newParticle: Array[Int]): Seq[Int] = {
     val newBindings = ListBuffer[Int]()
-    for (i <- 1 until oldParticle.numberOfBindings) {
+    for (i <- 1 to oldParticle.numberOfBindings) {
       if (oldParticle.getBinding(i) != newParticle.getBinding(i)) {
         newBindings += i
       }
@@ -136,8 +136,6 @@ trait Binding
       import Array.concat
       val destInfo = new EfficientIndexPattern(destination) 
       val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
-//      val queryWithMetaInfo = boundParticle :+ destInfo.extractFirst :+ destInfo.extractSecond
-      println("queryWMetaInfo: " + queryWithMetaInfo.mkString(" "))
       graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
     }
 

@@ -86,17 +86,66 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   /**
-   * Check all possible filters with the given information.
+   * Check all filters that require information from newly
+   * bound variables
    */
-  def checkAllFilters(query: Array[Int]): Boolean = {
-   // var i = 0
+  def checkAllFilters(query: Array[Int], newBindings: Array[Int]): Boolean = {
+    if (filterList(query.queryId).length > 0 && filterList(query.queryId)(0).isGlobalFalse) {
+      return false
+    }    
     for (i <- 0 until filterList(query.queryId).length) {
-      if (!passesFilter(query, i)) {
-       return false
+      println("Checking " + filterList(query.queryId)(i))
+      if (isRelevantFilter(query, newBindings, i)) {
+        println("... Filter is relevant")
+        if (!passesFilter(query, i)) {
+          println("... filter did NOT pass")
+          return false
+        }
+      }
+      else {
+        println("... not relevant.")
       }
     }
     true
   }
+  
+  /**
+   * Determines whether a filter is relevant by ensuring that
+   * there is at least one variable in `newBindings` present
+   * and that all information for the given filter is available
+   */
+  def isRelevantFilter(query: Array[Int], newBindings: Array[Int], queryNr: Int): Boolean = {
+    val filter = filterList(query.queryId)(queryNr)
+    val contains = containsNewBinding(filter, newBindings)
+    val avail = allInfoAvailable(filter, query)
+    println("contains: " + contains)
+    println("avail: " + avail)
+    return (avail && contains)
+  }
+  
+  /**
+   * Checks that all necessary bindings are present to evaluate
+   * a filter
+   */
+  private def allInfoAvailable(filter: FilterTriple, query: Array[Int]): Boolean = {
+    if (filter.lhsIsVar && query.binding(filter.lhs) == 0) return false
+    if (filter.rhsIsVar && query.binding(filter.rhs) == 0) return false
+    true
+  }
+  
+  /**
+   * Checks that a given filter contains at least one variable
+   * given in `newBindings`
+   */
+  private def containsNewBinding(filter: FilterTriple, newBindings: Array[Int]): Boolean = {
+    println("containsNewBinding: newBindings=" + newBindings.mkString(" ") + "; c(1): " + newBindings.contains(1))
+    println("lhs: isVar = " + filter.lhsIsVar + "; lhs=" + filter.lhs)
+    println("rhs: isVar = " + filter.rhsIsVar + "; rhs=" + filter.rhs)
+    if (filter.lhsIsVar && newBindings.contains(-filter.lhs)) return true
+    if (filter.rhsIsVar && newBindings.contains(-filter.rhs)) return true
+    false
+  }
+
   
   /**
    * Processes a query particle for all relevant filters and then
@@ -106,36 +155,32 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    *   + [destination as long in two int fields]
    */
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
+    println(s"DictionaryVertex::checkAndForward query=" + query.mkString(" "))
     
-    if (checkAllFilters(query)) {
-      println(s"DictionaryVertex::checkAndForward query=" + query.mkString(" "))
-      val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
-      val numberOfNewBindings = query(query.length-3)
-      val newBindings = query.takeRight(numberOfNewBindings+3).dropRight(3)
-      
+    val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
+    val numberOfNewBindings = query(query.length-3)
+    val newBindings = query.takeRight(numberOfNewBindings+3).dropRight(3)
+    println("Newbindings = " + newBindings.mkString(" "))
+    
+    if (checkAllFilters(query, newBindings)) {
       val filterResponse = query.dropRight(newBindings.length + 3)
-//       val filterResponse = query.dropRight(2)
-      println(s"... newBindings = " + newBindings.mkString(" "))
-      println(s"... filterResponse = " + filterResponse)
+      graphEditor.sendSignal(filterResponse, destination)
       
       val eip = new EfficientIndexPattern(destination).toTriplePattern
-      println("Passed filter; sending to " + destination + " (= " + eip + ")")
-      
-      graphEditor.sendSignal(filterResponse, destination) 
+      println("... Passed filters; sending to " + destination + " (= " + eip + ")")
     }
-    else {
-      println("Did not pass filters...")
+    else {      
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-      print("Sending back " + query.tickets + " to query vertex ID " + queryVertexId)
-      println(" (=" + new EfficientIndexPattern(queryVertexId).toTriplePattern + ")")
-      graphEditor.sendSignal(query.tickets, queryVertexId) // Send back tickets to query particle
+      graphEditor.sendSignal(query.tickets, queryVertexId)
+      
+      println("... Did not pass filters")
     }
   }
   
   def varToValue(query: Array[Int], index: Int): Option[Int] = {
     val varValue = if (index > 0) index else query.getBinding(index) // else also includes index=0
     if (varValue > 0) 
-     None//Some(d.get(varValue).toInt)
+     Some(d.get(varValue).toInt)
     else None
   }
   
@@ -145,22 +190,15 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   def getRealValues(query: Array[Int], filter: FilterTriple): (Option[Int], Option[Int]) = {
     (
-     if(filter.lhsIsVar) varToValue(query, filter.lhs) else Some(filter.lhs),
-     if(filter.rhsIsVar) varToValue(query, filter.rhs) else Some(filter.rhs)
+     if(filter.lhsIsVar) varToValue(query, filter.lhs) else None,
+     if(filter.rhsIsVar) varToValue(query, filter.rhs) else None
     )
   }
   
   def passesFilter(query: Array[Int], filterIndex: Int): Boolean = {
-    true
-//    val filter = query.filter(filterIndex)
-//    val rawComparator = filter.comparatorNoFlags
-//    if (0 < rawComparator && rawComparator <= 6) {
-//      val (lhsVal, rhsVal) = getRealValues(query, filter)
-//      if (lhsVal.isDefined && rhsVal.isDefined) {
-//        return arithmeticFilter(lhsVal.get, filter.intToOperator, rhsVal.get)
-//      }
-//    }
-//    return true
+    val filter = filterList(query.queryId)(filterIndex)
+    val (lhs, rhs) = getRealValues(query, filter)
+    filter.passes(lhs, rhs)
   }
   
 }
