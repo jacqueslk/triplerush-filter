@@ -30,6 +30,10 @@ object FilterTriple {
     if (comparator.isDefined) return comparator.get
     else throw new Exception(s"Unknown comparator number $number")
   }
+  
+  def globalFalse(): FilterTriple = {
+    FilterTriple(0, 0, 0)
+  }
 }
 
 
@@ -48,6 +52,9 @@ case class FilterTriple(lhs: Int, comparator: Int, rhs: Int) {
    def rhsIsVar:  Boolean = (comparator & 0x40000000) == 0x40000000
    def isNegated: Boolean = (comparator & 0x20000000) == 0x20000000
    
+   // comparator=0 signals that the filter never evaluates to true
+   def isGlobalFalse: Boolean = (comparator == 0) 
+   
    def comparatorNoFlags: Int = (comparator & 0x1ffffff)
    
    def isArithmeticFilter: Boolean = (1 <= comparator && comparator <= 6)
@@ -59,6 +66,9 @@ case class FilterTriple(lhs: Int, comparator: Int, rhs: Int) {
      }
      if (isArithmeticFilter) {
        return arithmeticFilter(lhsVal, rhsVal)
+     }
+     else if(isGlobalFalse) {
+       return false
      }
      else {
        throw new Exception("Unknown filter type!")

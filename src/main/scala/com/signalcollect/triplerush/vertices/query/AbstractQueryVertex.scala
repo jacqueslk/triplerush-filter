@@ -189,9 +189,12 @@ abstract class AbstractQueryVertex[StateType](
       dispatchedQuery = optimizeQuery
       if (dispatchedQuery.isDefined) {
         graphEditor.sendSignal(
+          FilterRegistration(dispatchedQuery.get.queryId, filters),
+          Long.MaxValue
+        )
+        graphEditor.sendSignal(
           dispatchedQuery.get,
           dispatchedQuery.get.routingAddress)
-        graphEditor.sendSignal(FilterRegistration(dispatchedQuery.get.queryId, filters), Long.MaxValue)
       } else {
         reportResultsAndRequestQueryVertexRemoval(graphEditor)
       }

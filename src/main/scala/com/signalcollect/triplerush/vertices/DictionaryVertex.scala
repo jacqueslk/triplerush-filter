@@ -19,17 +19,12 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   val d = TrGlobal.dictionary
   
   val filterList = HashMap.empty[Int, Seq[FilterTriple]];
-
   
-  def nextRoutingAddress(childDelta: Int): Long = 0
-  
-  def addChildDelta(delta: Int): Boolean = false
-  
-  def cardinality: Int = 0
-  
-  def foreachChildDelta(f: Int => Unit): Unit = { }
-  
-  def handleChildIdRequest(requestor: Long, graphEditor: GraphEditor[Long, Any]): Unit = { }
+  // Unused methods that must be implemented because of IndexVertex
+  override def addChildDelta(delta: Int): Boolean = false
+  override def cardinality: Int = 0
+  override def foreachChildDelta(f: Int => Unit): Unit = { }
+  override def handleChildIdRequest(requestor: Long, graphEditor: GraphEditor[Long, Any]): Unit = { }
 
   override def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     checkAndForward(query, graphEditor)
@@ -38,32 +33,53 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   override def registerFilters(queryId: Int, queryFilters: Seq[FilterTriple]) {
     println(s"DV::registerFilters: Registering $queryFilters to query ID $queryId")
     filterList(queryId) = queryFilters
-    checkNoVarFilters(queryId)
+    summarizeNoVarFilters(queryId)
   }
   
   /**
-   * Check filters with no variables (i.e. filters that can be
-   * checked at the beginning) and remove them from the list
+   * Checks & removes all filters with no variables and adds a
+   * "global false" filter at the beginning if the query can
+   * not succeed (i.e. if a no var filter returned false)
    */
-  def checkNoVarFilters(queryId: Int): Boolean = {
-    println("DV::checkNoVarFilters")
-    var i = 0
-    for (i <- 0 until filterList(queryId).length) {
-      val filterToCheck = filterList(queryId)(i)
-      if (!filterToCheck.lhsIsVar && !filterToCheck.rhsIsVar) {
-        println(s"... checking $filterToCheck")
-        if (!filterToCheck.passes(None, None)) {
-          println("..... filter did NOT pass!")
-          return false
-        }
-        removeFilterFromList(queryId, i)
-      }
+  def summarizeNoVarFilters(queryId: Int) {
+    val noVarPassed = removeNoVarFilters(queryId)
+    if (!noVarPassed) {
+      filterList(queryId) = FilterTriple.globalFalse +: filterList(queryId)
+      println(filterList(queryId))
     }
-    true
   }
   
+  /**
+   * Returns whether a filter doesn't make use of any variables
+   */
+  private def isNoVarFilter(filter: FilterTriple): Boolean = (!filter.lhsIsVar && !filter.rhsIsVar)
+  
+  /**
+   * Checks & removes filters with no variables (i.e. filters that
+   * can be checked at the beginning) and return result
+   */
+  private def removeNoVarFilters(queryId: Int): Boolean = {
+    var i = 0
+    var result = true
+    filterList(queryId).foreach { e =>
+      if (isNoVarFilter(e)) {
+        if (result && !e.passes(None, None)) {
+          println(s"Filter $e did not pass!!!")
+          result = false
+        }
+        removeFilterFromList(queryId, i)
+        i -= 1
+      }
+      i += 1
+    }
+    result
+  }
+  
+  /**
+   * Helper method to remove an item from a list with a given index
+   */
   private def removeFilterFromList(queryId: Int, index: Int) {
-    filterList(queryId) = filterList(queryId).take(index-1) ++ filterList(queryId).drop(index)
+    filterList(queryId) = filterList(queryId).take(index) ++ filterList(queryId).drop(index+1)
   }
   
   def removeFilters(queryId: Int) {
