@@ -44,22 +44,21 @@ object FilterTriple {
  * 0x2000_0000: 1 if function is negated, 0 if not. (tentative, not implemented yet)
  */
 case class FilterTriple(lhs: Int, comparator: Int, rhs: Int) {
-   import FilterTriple._
+  import FilterTriple._
   
-   def intToOperator: String = FilterTriple.intToOperator(comparator)
+  def intToOperator: String = FilterTriple.intToOperator(comparator)
    
-   def lhsIsVar:  Boolean = (comparator & 0x80000000) == 0x80000000
-   def rhsIsVar:  Boolean = (comparator & 0x40000000) == 0x40000000
-   def isNegated: Boolean = (comparator & 0x20000000) == 0x20000000
+  def lhsIsVar:  Boolean = (comparator & 0x80000000) == 0x80000000
+  def rhsIsVar:  Boolean = (comparator & 0x40000000) == 0x40000000
+  def isNegated: Boolean = (comparator & 0x20000000) == 0x20000000
+  def comparatorNoFlags: Int = (comparator & 0x1fffffff)
    
-   // comparator=0 signals that the filter never evaluates to true
-   def isGlobalFalse: Boolean = (comparator == 0) 
+  // comparator=0 signals that the filter never evaluates to true
+  def isGlobalFalse: Boolean = (comparator == 0)
    
-   def comparatorNoFlags: Int = (comparator & 0x1ffffff)
+  def isArithmeticFilter: Boolean = (1 <= comparatorNoFlags && comparatorNoFlags <= 6)
    
-   def isArithmeticFilter: Boolean = (1 <= comparator && comparator <= 6)
-   
-   def passes(lhsVal: Option[Int] = None, rhsVal: Option[Int] = None): Boolean = {
+   def passes(lhsVal: Option[String] = None, rhsVal: Option[String] = None): Boolean = {
      // Ensure that we have the values we need for the variables
      if (lhsIsVar && !lhsVal.isDefined || rhsIsVar && !rhsVal.isDefined) {
        throw new Exception("Variables without values encountered!")
@@ -67,26 +66,31 @@ case class FilterTriple(lhs: Int, comparator: Int, rhs: Int) {
      if (isArithmeticFilter) {
        return arithmeticFilter(lhsVal, rhsVal)
      }
-     else if(isGlobalFalse) {
+     else if (isGlobalFalse) {
        return false
      }
      else {
-       throw new Exception("Unknown filter type!")
+       throw new Exception(s"Unknown filter type for comparator $comparator!")
      }
    }
    
-   def arithmeticFilter(lhsVal: Option[Int] = None, rhsVal: Option[Int] = None): Boolean = {
-     val lhs = if(lhsVal.isDefined) lhsVal.get else this.lhs
-     val rhs = if(rhsVal.isDefined) rhsVal.get else this.rhs
-    
-    comparator match {
-      case 1 =>  lhs == rhs
-      case 2 =>  lhs >  rhs
-      case 3 =>  lhs <  rhs
-      case 4 =>  lhs != rhs
-      case 5 =>  lhs >= rhs
-      case 6 =>  lhs <= rhs
-      case _ => throw new Exception(s"Unknown operator $comparator")
-    }
-  }
+   def arithmeticFilter(lhsVal: Option[String] = None, rhsVal: Option[String] = None): Boolean = {
+     try {
+       val lhs = if(lhsVal.isDefined) lhsVal.get.toInt else this.lhs
+       val rhs = if(rhsVal.isDefined) rhsVal.get.toInt else this.rhs
+       
+       comparatorNoFlags match {
+         case 1 =>  lhs == rhs
+         case 2 =>  lhs >  rhs
+         case 3 =>  lhs <  rhs
+         case 4 =>  lhs != rhs
+         case 5 =>  lhs >= rhs
+         case 6 =>  lhs <= rhs
+         case _ => throw new Exception(s"Unknown operator $comparator")
+       }
+     }
+     catch {
+       case nfe: NumberFormatException => return false
+     }
+   }
 }

@@ -25,6 +25,7 @@ import com.signalcollect.Edge
 import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
+import com.signalcollect.triplerush.FilterPending
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
 
@@ -102,7 +103,7 @@ trait Binding
       val newBinds = findNewBindings(query, boundParticle)
       routeSuccessfullyBound(boundParticle, newBinds, graphEditor)
     } else {
-//      println("Could not bind")
+      println(s"Could not bind childDelta=$childDelta")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
@@ -133,10 +134,18 @@ trait Binding
     else {
       val destination = if(boundParticle.isResult) QueryIds.embedQueryIdInLong(boundParticle.queryId)
                                               else boundParticle.routingAddress
-      import Array.concat
-      val destInfo = new EfficientIndexPattern(destination) 
-      val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
-      graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+      if (newBindings.length == 0) {
+        graphEditor.sendSignal(boundParticle, destination)
+      }                                       
+      else {
+        import Array.concat
+        val destInfo = new EfficientIndexPattern(destination) 
+        val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
+        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+        
+        //FilterPending alternative: (instead of everything in else{ })
+        //graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
+      }
     }
 
 //    if (boundParticle.isResult) {

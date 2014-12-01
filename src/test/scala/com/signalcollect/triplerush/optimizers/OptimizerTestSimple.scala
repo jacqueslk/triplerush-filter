@@ -30,12 +30,11 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       
       val variables = List("A", "T", "B")
       val queryString = """
-        SELECT ?T ?A ?B
+        SELECT ?A ?T ?B
       	WHERE {
           <http://a> <http://p> ?A .
-          FILTER(7 <= 10)
           ?A ?T ?B
-          FILTER(?A < 17)
+          FILTER(?B < 17)
         }"""
       
       val query = Sparql(queryString).get

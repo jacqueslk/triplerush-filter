@@ -2,7 +2,6 @@ package com.signalcollect.triplerush.vertices
 
 import scala.collection.mutable.HashMap
 import com.signalcollect.GraphEditor
-import com.signalcollect.triplerush.FilterResponse
 import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
@@ -96,14 +95,10 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     for (i <- 0 until filterList(query.queryId).length) {
       println("Checking " + filterList(query.queryId)(i))
       if (isRelevantFilter(query, newBindings, i)) {
-        println("... Filter is relevant")
-        if (!passesFilter(query, i)) {
+        if (!passesFilter(query, i)) { // TODO this can be with the above if
           println("... filter did NOT pass")
           return false
         }
-      }
-      else {
-        println("... not relevant.")
       }
     }
     true
@@ -118,8 +113,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     val filter = filterList(query.queryId)(queryNr)
     val contains = containsNewBinding(filter, newBindings)
     val avail = allInfoAvailable(filter, query)
-    println("contains: " + contains)
-    println("avail: " + avail)
+    println(s"isRelevant: avail=$avail && contains=$contains")
     return (avail && contains)
   }
   
@@ -138,9 +132,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * given in `newBindings`
    */
   private def containsNewBinding(filter: FilterTriple, newBindings: Array[Int]): Boolean = {
-    println("containsNewBinding: newBindings=" + newBindings.mkString(" ") + "; c(1): " + newBindings.contains(1))
-    println("lhs: isVar = " + filter.lhsIsVar + "; lhs=" + filter.lhs)
-    println("rhs: isVar = " + filter.rhsIsVar + "; rhs=" + filter.rhs)
     if (filter.lhsIsVar && newBindings.contains(-filter.lhs)) return true
     if (filter.rhsIsVar && newBindings.contains(-filter.rhs)) return true
     false
@@ -167,7 +158,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
       graphEditor.sendSignal(filterResponse, destination)
       
       val eip = new EfficientIndexPattern(destination).toTriplePattern
-      println("... Passed filters; sending to " + destination + " (= " + eip + ")")
+      println("... Passed filters; sending to " + eip)
     }
     else {      
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
@@ -177,10 +168,10 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     }
   }
   
-  def varToValue(query: Array[Int], index: Int): Option[Int] = {
+  def varToValue(query: Array[Int], index: Int): Option[String] = {
     val varValue = if (index > 0) index else query.getBinding(index) // else also includes index=0
     if (varValue > 0) 
-     Some(d.get(varValue).toInt)
+     Some(d.get(varValue))
     else None
   }
   
@@ -188,7 +179,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * Gets real values from the dictionary. lhs and rhs might be variables or literal
    * integers. None is returned if a variable is not bound.
    */
-  def getRealValues(query: Array[Int], filter: FilterTriple): (Option[Int], Option[Int]) = {
+  def getRealValues(query: Array[Int], filter: FilterTriple): (Option[String], Option[String]) = {
     (
      if(filter.lhsIsVar) varToValue(query, filter.lhs) else None,
      if(filter.rhsIsVar) varToValue(query, filter.rhs) else None

@@ -26,7 +26,7 @@ import com.signalcollect.triplerush.CardinalityReply
 import com.signalcollect.triplerush.CardinalityRequest
 import com.signalcollect.triplerush.ChildIdRequest
 import com.signalcollect.triplerush.FilterRegistration
-import com.signalcollect.triplerush.FilterResponse
+import com.signalcollect.triplerush.FilterPending
 import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.ObjectCountSignal
 import com.signalcollect.triplerush.PlaceholderEdge
@@ -105,17 +105,15 @@ abstract class IndexVertex[State](val id: Long)
     
     signal match {
       case query: Array[Int] =>
-//        println("Deliver Array[Int]: " + query.mkString(", "))
         processQuery(query, graphEditor)
-//      case filter: FilterRequest =>
-////        println("Deliver FilterRequest: " + filter.query.mkString(", "))
-//        if (id != DICTIONARY_ID) {
-//          throw new Exception(s"Unexpected filter request to id $id")
-//        }
-//        processQuery(filter.query, graphEditor)
-      case response: FilterResponse =>
-//        println("Deliver FilterResponse: " + response.query.mkString(", "))
-        processQuery(response.query, graphEditor)
+      case fp: FilterPending =>
+//        println("Deliver FilterPending: " + response.query.mkString(", "))
+        // unused currently
+        import Array.concat
+        val idInfo = new EfficientIndexPattern(id) 
+        val queryWithMetaInfo = concat(fp.query, fp.newBindings) :+ fp.newBindings.length :+ idInfo.extractFirst :+ idInfo.extractSecond
+        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+        println("Routing " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
       case fr: FilterRegistration =>
         registerFilters(fr.queryId, fr.filters)
       case cr: CardinalityRequest =>
