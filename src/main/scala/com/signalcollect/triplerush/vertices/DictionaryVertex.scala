@@ -28,6 +28,9 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     checkAndForward(query, graphEditor)
   }
   
+  /**
+   * Registers filter list for a given query ID for later processing
+   */
   override def registerFilters(queryId: Int, queryFilters: Seq[FilterTriple]) {
     println(s"DV::registerFilters: Registering $queryFilters to query ID $queryId")
     filterList(queryId) = queryFilters
@@ -80,12 +83,15 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     filterList(queryId) = filterList(queryId).take(index) ++ filterList(queryId).drop(index+1)
   }
   
+  /**
+   * Removes filter list of a given query ID
+   */
   def removeFilters(queryId: Int) {
     filterList -= queryId
   }
   
   /**
-   * Check all filters that require information from newly
+   * Checks all filters that require information from newly
    * bound variables
    */
   def checkAllFilters(query: Array[Int], newBindings: Array[Int]): Boolean = {
@@ -109,7 +115,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   def isRelevantFilter(query: Array[Int], newBindings: Array[Int], queryNr: Int): Boolean = {
     val filter = filterList(query.queryId)(queryNr)
-    return containsNewBinding(filter, newBindings) && allInfoAvailable(filter, query)
+    return allInfoAvailable(filter, query) && containsNewBinding(filter, newBindings) 
   }
   
   /**
@@ -162,6 +168,10 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     }
   }
   
+  /**
+   * Gets the value from the dictionary for a given
+   * binding in the query particle
+   */
   def varToValue(query: Array[Int], index: Int): Option[String] = {
     val varValue = if (index > 0) index else query.getBinding(index) // else also includes index=0
     if (varValue > 0) 
@@ -180,6 +190,11 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     )
   }
   
+  /**
+   * Entry point method to test if a filter passes.
+   * This assumes that it has been checked with isRelevantFilter()
+   * beforehand [or, more specifically, with allInfoAvailable()].
+   */
   def passesFilter(query: Array[Int], filterIndex: Int): Boolean = {
     val filter = filterList(query.queryId)(filterIndex)
     val (lhs, rhs) = getRealValues(query, filter)

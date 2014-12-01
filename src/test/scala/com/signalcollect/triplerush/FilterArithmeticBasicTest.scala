@@ -5,7 +5,7 @@ import org.scalatest.FlatSpec
 import com.signalcollect.triplerush.sparql.Sparql
 
 /**
- * Tests basic arithmetic capabilities of SPARQL features,
+ * Tests basic arithmetic capabilities of SPARQL filters,
  * namely the filters <=, <, =, !=, > and >=
  * The SPARQL queries also include various combinations of
  * optional periods (.) between filter triple and FILTER
