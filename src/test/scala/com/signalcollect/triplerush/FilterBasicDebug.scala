@@ -1,19 +1,17 @@
-package com.signalcollect.triplerush.optimizers
+package com.signalcollect.triplerush
 
-import com.signalcollect.triplerush.TestAnnouncements
 import org.scalatest.prop.Checkers
 import org.scalatest.FlatSpec
-import org.scalatest.ShouldMatchers
-import com.signalcollect.triplerush.TripleRush
-import com.signalcollect.triplerush.PredicateSelectivity
-import com.signalcollect.triplerush.TriplePattern
-import com.signalcollect.triplerush.Dictionary
-import com.signalcollect.triplerush.PredicateStats
 import com.signalcollect.triplerush.sparql.Sparql
 
-class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements {
-  "Optimizer" should "handle SPARQL queries" in {
-    implicit val tr = new TripleRush
+/**
+ * Temporary test case to fiddle around with.
+ */
+class FilterBasicDebug extends FlatSpec with Checkers { 
+  
+  implicit val tr = new TripleRush
+  
+  "SPARQL" should "process the <= filter" in {   
     try {
       tr.addTriple("http://a", "http://p", "http://b")
       tr.addTriple("http://a", "http://p", "http://c")
@@ -21,12 +19,10 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       tr.addTriple("http://b", "http://p", "123")
       tr.addTriple("http://b", "http://p", "14")
       tr.addTriple("http://b", "http://p", "1")
-
+      
       println("START PREPARE EXECUTION\r================================")
       tr.prepareExecution
       println("END PREPARE EXECUTION\r================================\r\r\r\r")
-      
-
       
       val variables = List("A", "T", "B")
       val queryString = """
@@ -34,11 +30,12 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
       	WHERE {
           <http://a> <http://p> ?A .
           ?A ?T ?B
-          FILTER(?B < 17)
+          FILTER(?B <= 14)
         }"""
       
       val query = Sparql(queryString).get
       val result = query.resultIterator.toList
+
       println("Total results: " + result.size)
       result.foreach(e => 
         {
@@ -48,6 +45,7 @@ class OptimizerTestSimple extends FlatSpec with Checkers with TestAnnouncements 
           println
         }
       )
+   
     } finally {
       tr.shutdown
     }

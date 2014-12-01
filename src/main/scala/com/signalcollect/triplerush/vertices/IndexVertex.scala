@@ -90,24 +90,23 @@ abstract class IndexVertex[State](val id: Long)
 
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
     // Temp code for output ---------
-    if (id != DICTIONARY_ID) {
-      val infoS = expose("Subject")  .toString.replace("http://", "")
-      val infoP = expose("Predicate").toString.replace("http://", "")
-      val infoO = expose("Object")   .toString.replace("http://", "")
-      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
-      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
-    }
-    else {
-      val eip = new EfficientIndexPattern(id).toTriplePattern
-      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
-    }
+//    if (id != DICTIONARY_ID) {
+//      val infoS = expose("Subject")  .toString.replace("http://", "")
+//      val infoP = expose("Predicate").toString.replace("http://", "")
+//      val infoO = expose("Object")   .toString.replace("http://", "")
+//      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
+//      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
+//    }
+//    else {
+//      val eip = new EfficientIndexPattern(id).toTriplePattern
+//      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
+//    }
     // End output code ----------
     
     signal match {
       case query: Array[Int] =>
         processQuery(query, graphEditor)
       case fp: FilterPending =>
-//        println("Deliver FilterPending: " + response.query.mkString(", "))
         // unused currently
         import Array.concat
         val idInfo = new EfficientIndexPattern(id) 

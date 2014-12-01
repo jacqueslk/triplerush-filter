@@ -62,7 +62,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     filterList(queryId).foreach { e =>
       if (isNoVarFilter(e)) {
         if (result && !e.passes(None, None)) {
-          println(s"Filter $e did not pass!!!")
+          println(s"Filter $e did not pass!")
           result = false
         }
         removeFilterFromList(queryId, i)
@@ -94,11 +94,9 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     }    
     for (i <- 0 until filterList(query.queryId).length) {
       println("Checking " + filterList(query.queryId)(i))
-      if (isRelevantFilter(query, newBindings, i)) {
-        if (!passesFilter(query, i)) { // TODO this can be with the above if
-          println("... filter did NOT pass")
-          return false
-        }
+      if (isRelevantFilter(query, newBindings, i) && !passesFilter(query, i)) {
+        println("... filter did NOT pass")
+        return false
       }
     }
     true
@@ -111,10 +109,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   def isRelevantFilter(query: Array[Int], newBindings: Array[Int], queryNr: Int): Boolean = {
     val filter = filterList(query.queryId)(queryNr)
-    val contains = containsNewBinding(filter, newBindings)
-    val avail = allInfoAvailable(filter, query)
-    println(s"isRelevant: avail=$avail && contains=$contains")
-    return (avail && contains)
+    return containsNewBinding(filter, newBindings) && allInfoAvailable(filter, query)
   }
   
   /**
@@ -151,7 +146,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
     val numberOfNewBindings = query(query.length-3)
     val newBindings = query.takeRight(numberOfNewBindings+3).dropRight(3)
-    println("Newbindings = " + newBindings.mkString(" "))
     
     if (checkAllFilters(query, newBindings)) {
       val filterResponse = query.dropRight(newBindings.length + 3)
