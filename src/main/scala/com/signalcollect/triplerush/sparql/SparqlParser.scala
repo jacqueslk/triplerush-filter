@@ -118,9 +118,9 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   }
   
   val filterSpec: Parser[ParsedPattern] = {
-    "FILTER(" ~> variableOrBound ~ arithmeticOperator ~ variableOrBound <~ ")"  ^^ {
-      case s ~ p ~ o =>
-        ParsedPattern(s, StringLiteral(p), o, true) 
+    "FILTER(" ~> rep1("[\\!-'\\*-~]+".r) <~ ")"  ^^ {
+      case filterBody =>
+        ParsedPattern(StringLiteral(filterBody.mkString(" ")), StringLiteral(""), StringLiteral(""), true) 
     }
   }
   

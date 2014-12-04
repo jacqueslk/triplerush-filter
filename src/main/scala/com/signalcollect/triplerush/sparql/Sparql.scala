@@ -229,39 +229,15 @@ object Sparql {
       encodedPatterns
     }
     
-    def dictionaryEncodeFilters(patterns: Seq[ParsedPattern]): Seq[FilterTriple] = {
-      def encodeComparator(parsedPattern: ParsedPattern): Int = {
-        parsedPattern.p match {
-          case StringLiteral(comparator) =>
-            val lhsIsVar = parsedPattern.s.isInstanceOf[Variable]
-            val rhsIsVar = parsedPattern.o.isInstanceOf[Variable]
-            FilterTriple.operatorToInt(comparator, lhsIsVar, rhsIsVar)
-          case _ =>
-            throw new Exception(s"Unsupported operator type in $parsedPattern")
-        }
-      }
-      
-      def encodeVariableOrInt(field: VariableOrBound): Int = {
-        field match {
-          case Variable(name) =>
-            variableToIndex(name)
-          case Iri(name) => // IRI.... TODO ---------
-            name.toInt // stupid, stupid... TODO -------
-        }
-      }
-      
-      val encodedFilters = patterns.collect {
-        case item @ ParsedPattern(_, _, _, true) =>
-          FilterTriple(encodeVariableOrInt(item.s), encodeComparator(item), encodeVariableOrInt(item.o))
-      }
-      encodedFilters
-    }
-
-
     // Needs to happen before 'containsEntryThatIsNotInDictionary' check, because it modifies that flag as a side effect.
     val encodedPatternUnions = select.patternUnions.map(dictionaryEncodePatterns)
-    val encodedFilters = select.patternUnions.map(dictionaryEncodeFilters)
-    println(s"Encoded Filters:\r$encodedFilters")
+    select.patternUnions.foreach { x => x.foreach {
+       v =>
+        if (v.isFilter) {
+         // FilterParser.parseAll(FilterParser.multiplicativeExpression, v.s.toString)
+        }
+    }
+    }
 
     if (containsEntryThatIsNotInDictionary) {
       None
@@ -275,7 +251,7 @@ object Sparql {
           idToVariableName = idToVariableName,
           isDistinct = parsed.select.isDistinct,
           orderBy = select.orderBy.map(variableNameToId),
-          filters = encodedFilters,
+          filters = List[Seq[FilterTriple]](), // TODO add back filters
           limit = select.limit))
     }
   }
