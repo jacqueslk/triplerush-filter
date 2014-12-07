@@ -2,19 +2,20 @@ package com.signalcollect.triplerush.sparql
 
 import scala.util.parsing.combinator.RegexParsers
 
-sealed trait UnaryExpression
-case class BuiltInCall(name: String) extends UnaryExpression
-case class Var(name: String) extends UnaryExpression
-case class NumericLiteral(number: Int) extends UnaryExpression
+// Filter Triple case classes / traits
+import com.signalcollect.triplerush.UnaryExpression
+import com.signalcollect.triplerush.BuiltInCall
+import com.signalcollect.triplerush.Var
+import com.signalcollect.triplerush.NumericLiteral
 
-case class MultiplicativeExpression(firstValue: UnaryExpression, otherValues: Seq[(String, UnaryExpression)])
-case class AdditiveExpression(firstValue: MultiplicativeExpression, otherValues: Seq[(String, MultiplicativeExpression)])
-case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: Option[AdditiveExpression])
-case class ConditionalAndExpression(entries: Seq[RelationalExpression])
+import com.signalcollect.triplerush.MultiplicativeExpression
+import com.signalcollect.triplerush.AdditiveExpression
+import com.signalcollect.triplerush.RelationalExpression
+import com.signalcollect.triplerush.ConditionalAndExpression
 
-sealed trait Constraint
-case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint
-
+import com.signalcollect.triplerush.Constraint
+import com.signalcollect.triplerush.ConditionalOrExpression
+//import com.signalcollect.triplerush.GlobalNegative
 
 object FilterParser extends RegexParsers {
     val identifier: Parser[String] = "[-a-zA-Z0-9]*".r
@@ -43,13 +44,12 @@ object FilterParser extends RegexParsers {
     // [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
     // [54] UnaryExpression ::=  '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
     val multiplicativeExpression: Parser[MultiplicativeExpression] = {
-      primaryExpression ~ rep(("*" | "/") ~ primaryExpression) ^^ {
+      primaryExpression ~ rep(("/" | "*") ~ primaryExpression) ^^ {
         case lhs ~ otherValues =>
-          val entryList = scala.collection.mutable.ListBuffer[(String, UnaryExpression)]()
-          otherValues.foreach { e=>
-            entryList += ((e._1, e._2))
+          val entryList = (("", lhs)) +: otherValues.collect {
+             case e => (e._1, e._2)
           }
-          MultiplicativeExpression(lhs, entryList.toList)
+          MultiplicativeExpression(entryList)
       }
     }
     
@@ -57,11 +57,10 @@ object FilterParser extends RegexParsers {
     val additiveExpression: Parser[AdditiveExpression] = {
       multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
         case lhs ~ otherValues =>
-          val entryList = scala.collection.mutable.ListBuffer[(String, MultiplicativeExpression)]()
-          otherValues.foreach { e=>
-            entryList += ((e._1, e._2))
+          val entryList = (("", lhs)) +: otherValues.collect {
+             case e => (e._1, e._2)
           }
-          AdditiveExpression(lhs, entryList.toList)
+          AdditiveExpression(entryList)
       }
     }
     
@@ -84,11 +83,8 @@ object FilterParser extends RegexParsers {
     val conditionalAndExpression: Parser[ConditionalAndExpression] = {
       relationalExpression ~ rep("&&" ~ relationalExpression) ^^ {
         case lhs ~ rhs =>
-          val entryList = scala.collection.mutable.ListBuffer[RelationalExpression](lhs)
-          rhs.foreach { e=>
-            entryList += (e._2)
-          }
-          ConditionalAndExpression(entryList.toList)
+          val entryList = lhs +: rhs.collect { case e => e._2 }
+          ConditionalAndExpression(entryList)
       }
     }
     
@@ -96,11 +92,8 @@ object FilterParser extends RegexParsers {
     val conditionalOrExpression: Parser[ConditionalOrExpression] = {
       conditionalAndExpression ~ rep("||" ~ conditionalAndExpression) ^^ {
         case lhs ~ rhs =>
-          val entryList = scala.collection.mutable.ListBuffer[ConditionalAndExpression](lhs)
-          rhs.foreach { e=>
-            entryList += (e._2)
-          }
-          ConditionalOrExpression(entryList.toList)
+          val entryList = lhs +: rhs.collect { case e => e._2 }
+          ConditionalOrExpression(entryList)
       }
     }  
 }
