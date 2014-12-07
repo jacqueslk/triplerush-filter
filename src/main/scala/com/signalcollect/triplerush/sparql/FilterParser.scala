@@ -44,7 +44,7 @@ object FilterParser extends RegexParsers {
     // [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
     // [54] UnaryExpression ::=  '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
     val multiplicativeExpression: Parser[MultiplicativeExpression] = {
-      primaryExpression ~ rep(("/" | "*") ~ primaryExpression) ^^ {
+      primaryExpression ~ rep(("*" | "/") ~ primaryExpression) ^^ {
         case lhs ~ otherValues =>
           val entryList = (("", lhs)) +: otherValues.collect {
              case e => (e._1, e._2)
