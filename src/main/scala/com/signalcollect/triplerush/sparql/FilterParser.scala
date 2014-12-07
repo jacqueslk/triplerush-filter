@@ -10,10 +10,10 @@ case class NumericLiteral(number: Int) extends UnaryExpression
 case class MultiplicativeExpression(firstValue: UnaryExpression, otherValues: Seq[(String, UnaryExpression)])
 case class AdditiveExpression(firstValue: MultiplicativeExpression, otherValues: Seq[(String, MultiplicativeExpression)])
 case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: Option[AdditiveExpression])
-
 case class ConditionalAndExpression(entries: Seq[RelationalExpression])
-case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression])
 
+sealed trait Constraint
+case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint
 
 
 object FilterParser extends RegexParsers {
@@ -35,10 +35,13 @@ object FilterParser extends RegexParsers {
       }
     }
     
+    // [55] PrimaryExpression ::= BrackettedExpression | BuiltInCall | IRIrefOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
     val primaryExpression: Parser[UnaryExpression] = {
       variable | numericLiteral
     }
     
+    // [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
+    // [54] UnaryExpression ::=  '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
     val multiplicativeExpression: Parser[MultiplicativeExpression] = {
       primaryExpression ~ rep(("*" | "/") ~ primaryExpression) ^^ {
         case lhs ~ otherValues =>
@@ -50,6 +53,7 @@ object FilterParser extends RegexParsers {
       }
     }
     
+    // [52] AdditiveExpression ::= MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | NumericLiteralPositive | NumericLiteralNegative )*
     val additiveExpression: Parser[AdditiveExpression] = {
       multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
         case lhs ~ otherValues =>
@@ -61,6 +65,8 @@ object FilterParser extends RegexParsers {
       }
     }
     
+    // [50] RelationalExpression ::= NumericExpression ( ('='|'!='|'<'|'>'|'<='|'>=') NumericExpression )?
+    // [51] NumericExpression ::= AdditiveExpression
     val relationalExpression: Parser[RelationalExpression] = {
       additiveExpression ~ opt(("=" | "!=" | "<" | ">" | "<=" | ">=") ~ additiveExpression) ^^ {
         case lhs ~ rhs =>
@@ -73,6 +79,8 @@ object FilterParser extends RegexParsers {
       }
     }
     
+    // [48] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*
+    // [49] ValueLogical ::= RelationalExpression
     val conditionalAndExpression: Parser[ConditionalAndExpression] = {
       relationalExpression ~ rep("&&" ~ relationalExpression) ^^ {
         case lhs ~ rhs =>
@@ -84,6 +92,7 @@ object FilterParser extends RegexParsers {
       }
     }
     
+    // [47] ConditionalOrExpression ::= ConditionalAndExpression ( '||' ConditionalAndExpression )*
     val conditionalOrExpression: Parser[ConditionalOrExpression] = {
       conditionalAndExpression ~ rep("||" ~ conditionalAndExpression) ^^ {
         case lhs ~ rhs =>
