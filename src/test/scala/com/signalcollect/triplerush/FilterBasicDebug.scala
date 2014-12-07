@@ -30,7 +30,7 @@ class FilterBasicDebug extends FlatSpec with Checkers {
       	WHERE {
           <http://a> <http://p> ?A .
           ?A ?T ?B
-          FILTER(6*5/?B + ?A/5 - 3)
+          FILTER(5/?B + ?B*3 - 3 > ?B || ?B*3-5 != 14)
         }"""
       
       val query = Sparql(queryString).get
