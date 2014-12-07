@@ -7,7 +7,8 @@ case class BuiltInCall(name: String) extends UnaryExpression
 case class Var(name: String) extends UnaryExpression
 case class NumericLiteral(number: Int) extends UnaryExpression
 
-case class MultiplicativeExpression(value: UnaryExpression)
+case class MultiplicativeExpression(firstValue: UnaryExpression, otherValues: Seq[(String, UnaryExpression)])
+case class AdditiveExpression(firstValue: MultiplicativeExpression, otherValues: Seq[(String, MultiplicativeExpression)])
 
 
 
@@ -35,10 +36,27 @@ object FilterParser extends RegexParsers {
     }
     
     val multiplicativeExpression: Parser[MultiplicativeExpression] = {
-      primaryExpression ^^ {
-        case value =>
-          MultiplicativeExpression(value)
+      primaryExpression ~ rep(("*" | "/") ~ primaryExpression) ^^ {
+        case lhs ~ otherValues =>
+          val entryList = scala.collection.mutable.ListBuffer[(String, UnaryExpression)]()
+          otherValues.foreach { e=>
+            entryList += ((e._1, e._2))
+          }
+          MultiplicativeExpression(lhs, entryList)
       }
     }
+    
+    val additiveExpression: Parser[AdditiveExpression] = {
+      multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
+        case lhs ~ otherValues =>
+          val entryList = scala.collection.mutable.ListBuffer[(String, MultiplicativeExpression)]()
+          otherValues.foreach { e=>
+            entryList += ((e._1, e._2))
+          }
+          AdditiveExpression(lhs, entryList)
+      }
+    }
+    
+    
   
 }

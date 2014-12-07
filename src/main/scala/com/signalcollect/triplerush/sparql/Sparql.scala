@@ -238,7 +238,7 @@ object Sparql {
             case ParsedPattern(StringLiteral(s), _, _, true) =>
                println("Now parsing " + s)
                println(
-                 FilterParser.parseAll(FilterParser.multiplicativeExpression, s)
+                 FilterParser.parseAll(FilterParser.additiveExpression, s)
                )
             case _ =>
           }
