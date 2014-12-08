@@ -12,6 +12,21 @@ import com.signalcollect.triplerush.QueryParticle
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.util.SplayIntSet
 
+// FilterTriple case classes / traits
+import com.signalcollect.triplerush.UnaryExpression
+import com.signalcollect.triplerush.BuiltInCall
+import com.signalcollect.triplerush.Var
+import com.signalcollect.triplerush.NumericLiteral
+
+import com.signalcollect.triplerush.MultiplicativeExpression
+import com.signalcollect.triplerush.AdditiveExpression
+import com.signalcollect.triplerush.RelationalExpression
+import com.signalcollect.triplerush.ConditionalAndExpression
+
+import com.signalcollect.triplerush.Constraint
+import com.signalcollect.triplerush.ConditionalOrExpression
+import com.signalcollect.triplerush.GlobalNegative
+
 final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   val d = TrGlobal.dictionary
@@ -53,7 +68,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   /**
    * Returns whether a filter doesn't make use of any variables
    */
-  private def isNoVarFilter(filter: FilterTriple): Boolean = (!filter.lhsIsVar && !filter.rhsIsVar)
+  private def isNoVarFilter(filter: FilterTriple): Boolean = filter.getVariableSet.isEmpty
   
   /**
    * Checks & removes filters with no variables (i.e. filters that
@@ -64,7 +79,8 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     var result = true
     filterList(queryId).foreach { e =>
       if (isNoVarFilter(e)) {
-        if (result && !e.passes(None, None)) {
+        if (false) { // TODO
+        //if (result && !e.passes(None, None)) {
           println(s"Filter $e did not pass!")
           result = false
         }
@@ -123,8 +139,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * a filter
    */
   private def allInfoAvailable(filter: FilterTriple, query: Array[Int]): Boolean = {
-    if (filter.lhsIsVar && query.binding(filter.lhs) == 0) return false
-    if (filter.rhsIsVar && query.binding(filter.rhs) == 0) return false
+    // TODO
     true
   }
   
@@ -133,8 +148,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * given in `newBindings`
    */
   private def containsNewBinding(filter: FilterTriple, newBindings: Array[Int]): Boolean = {
-    if (filter.lhsIsVar && newBindings.contains(-filter.lhs)) return true
-    if (filter.rhsIsVar && newBindings.contains(-filter.rhs)) return true
+    // TODO
     false
   }
 
@@ -185,8 +199,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   def getRealValues(query: Array[Int], filter: FilterTriple): (Option[String], Option[String]) = {
     (
-     if(filter.lhsIsVar) varToValue(query, filter.lhs) else None,
-     if(filter.rhsIsVar) varToValue(query, filter.rhs) else None
+      None, None // TODO -------
     )
   }
   
@@ -197,8 +210,9 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   def passesFilter(query: Array[Int], filterIndex: Int): Boolean = {
     val filter = filterList(query.queryId)(filterIndex)
-    val (lhs, rhs) = getRealValues(query, filter)
-    filter.passes(lhs, rhs)
+    //val (lhs, rhs) = getRealValues(query, filter)
+    //filter.passes(lhs, rhs)
+    true
   }
   
 }

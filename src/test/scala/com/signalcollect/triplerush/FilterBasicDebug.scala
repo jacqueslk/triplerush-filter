@@ -11,7 +11,7 @@ class FilterBasicDebug extends FlatSpec with Checkers {
   
   implicit val tr = new TripleRush
   
-  "SPARQL" should "process the <= filter" in {   
+  "SPARQL" should "" in {   
     try {
       tr.addTriple("http://a", "http://p", "http://b")
       tr.addTriple("http://a", "http://p", "http://c")
@@ -30,7 +30,7 @@ class FilterBasicDebug extends FlatSpec with Checkers {
       	WHERE {
           <http://a> <http://p> ?A .
           ?A ?T ?B
-          FILTER(?B <= 14)
+          FILTER(5/?B + ?B*3 - 3 > ?B || ?B*3-5 != 14)
         }"""
       
       val query = Sparql(queryString).get
