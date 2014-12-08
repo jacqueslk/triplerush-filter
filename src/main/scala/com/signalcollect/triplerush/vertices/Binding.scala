@@ -138,13 +138,13 @@ trait Binding
         graphEditor.sendSignal(boundParticle, destination)
       }                                       
       else {
-        import Array.concat
-        val destInfo = new EfficientIndexPattern(destination) 
-        val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
-        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+//        import Array.concat
+//        val destInfo = new EfficientIndexPattern(destination) 
+//        val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
+//        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
         
         //FilterPending alternative: (instead of everything in else{ })
-        //graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
+        graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
       }
     }
 

@@ -205,6 +205,7 @@ abstract class AbstractQueryVertex[StateType](
 
   def reportResultsAndRequestQueryVertexRemoval(graphEditor: GraphEditor[Long, Any]) {
     reportResults
+    // lucas
     requestQueryVertexRemoval(graphEditor)
   }
 

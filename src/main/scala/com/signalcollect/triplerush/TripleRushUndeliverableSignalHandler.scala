@@ -47,6 +47,9 @@ case object TripleRushUndeliverableSignalHandler extends UndeliverableSignalHand
         val predicateIndex = new PIndex(inexistentTargetId.asInstanceOf[Long])
         graphEditor.addVertex(predicateIndex)
         graphEditor.sendSignal(signal, inexistentTargetId)
+      case fp: FilterPending =>
+        val queryVertexId = QueryIds.embedQueryIdInLong(fp.query.queryId)
+        graphEditor.sendSignal(fp.query.tickets, queryVertexId)
       case other =>
         if (inexistentTargetId.isQueryId) {
           println(s"Failed signal delivery of $other of type ${other.getClass} to the query vertex with query id ${QueryIds.extractQueryIdFromLong(inexistentTargetId)} and sender id $senderId.")
