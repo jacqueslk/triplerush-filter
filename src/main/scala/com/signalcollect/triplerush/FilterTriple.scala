@@ -2,7 +2,7 @@ package com.signalcollect.triplerush
 
 sealed trait UnaryExpression
 case class BuiltInCall(name: String) extends UnaryExpression
-case class Var(name: String) extends UnaryExpression
+case class Var(index: Int) extends UnaryExpression
 case class NumericLiteral(number: Int) extends UnaryExpression
 
 case class MultiplicativeExpression(entries: Seq[(String, UnaryExpression)])
@@ -32,7 +32,7 @@ case class FilterTriple(constraint: Constraint) {
    * Returns a set of all variables the filter requires
    * to be evaluated
    */
-  def getVariableSet: Set[String] = {
+  def getVariableSet: Set[Int] = {
     if (isArithmetic) {
       val condOr = constraint.asInstanceOf[ConditionalOrExpression]
       val result = Set() ++ condOr.entries.flatMap {
@@ -54,7 +54,7 @@ case class FilterTriple(constraint: Constraint) {
    * @param bindings: Map with variable name and value,
    *  e.g. B => 12 if ?B is 12.
    */
-  def passes(bindings: Map[String, String]): Boolean = {
+  def passes(bindings: Map[Int, String]): Boolean = {
     if (isArithmetic) {
       constraint.asInstanceOf[ConditionalOrExpression].entries.foreach {
         condAnd => if (passesForCondAnd(condAnd, bindings)) {
@@ -73,14 +73,14 @@ case class FilterTriple(constraint: Constraint) {
   // ===================
   // Passes
   // ===================
-  private def passesForCondAnd(condAnd: ConditionalAndExpression, bindings: Map[String, String]): Boolean = {
+  private def passesForCondAnd(condAnd: ConditionalAndExpression, bindings: Map[Int, String]): Boolean = {
     condAnd.entries.foreach {
       relExpr => if (!passesForRelExpr(relExpr, bindings)) return false
     }
     true
   }
   
-  private def passesForRelExpr(relExpr: RelationalExpression, bindings: Map[String, String]): Boolean = {
+  private def passesForRelExpr(relExpr: RelationalExpression, bindings: Map[Int, String]): Boolean = {
     if (!relExpr.rhs.isDefined) return false // ?
     val lhs = computeAddExpr(relExpr.lhs, bindings)
     val rhs = computeAddExpr(relExpr.rhs.get, bindings)
@@ -100,7 +100,7 @@ case class FilterTriple(constraint: Constraint) {
     }
   }
   
-  private def computeAddExpr(addExpr: AdditiveExpression, bindings: Map[String, String]): Option[Double] = {
+  private def computeAddExpr(addExpr: AdditiveExpression, bindings: Map[Int, String]): Option[Double] = {
     var result = 0.0
     addExpr.entries.foreach {
       multExpr =>
@@ -115,7 +115,7 @@ case class FilterTriple(constraint: Constraint) {
     Some(result)
   }
   
-  private def computeMultExpr(multExpr: MultiplicativeExpression, bindings: Map[String, String]): Option[Double] = {
+  private def computeMultExpr(multExpr: MultiplicativeExpression, bindings: Map[Int, String]): Option[Double] = {
     val optionResult = getRealValue(multExpr.entries(0)._2, bindings)
     if (!optionResult.isDefined) return None
     var result = optionResult.get
@@ -131,10 +131,10 @@ case class FilterTriple(constraint: Constraint) {
     Some(result)
   }
   
-  private def getRealValue(unary: UnaryExpression, bindings: Map[String, String]): Option[Double] = {
+  private def getRealValue(unary: UnaryExpression, bindings: Map[Int, String]): Option[Double] = {
     if (unary.isInstanceOf[Var]) {
       try {
-        val number = bindings.get(unary.asInstanceOf[Var].name).get.toDouble
+        val number = bindings.get(unary.asInstanceOf[Var].index).get.toDouble
         return Some(number)
       } catch { case _: Exception => return None }
     }
@@ -150,16 +150,16 @@ case class FilterTriple(constraint: Constraint) {
   /**
    * Gets the variable set of a RelationalExpression object
    */
-  private def getVariableSetForRelExpr(relExpr: RelationalExpression): Set[String] = {
+  private def getVariableSetForRelExpr(relExpr: RelationalExpression): Set[Int] = {
     val lhsSet = getVariableSetForAddExpr(relExpr.lhs)
-    val rhsSet = if(relExpr.rhs.isDefined) getVariableSetForAddExpr(relExpr.rhs.get) else Set[String]()
+    val rhsSet = if(relExpr.rhs.isDefined) getVariableSetForAddExpr(relExpr.rhs.get) else Set[Int]()
     (lhsSet ++ rhsSet)
   }
   
   /**
    * Gets the variable set of an AdditiveExpression object
    */
-  private def getVariableSetForAddExpr(addExpr: AdditiveExpression): Set[String] = {
+  private def getVariableSetForAddExpr(addExpr: AdditiveExpression): Set[Int] = {
     Set() ++ addExpr.entries.flatMap {
       entry => getVariableSetForMultExpr(entry._2) 
     }
@@ -168,9 +168,9 @@ case class FilterTriple(constraint: Constraint) {
   /**
    * Gets the variable set of a MultiplicativeExpression object
    */
-  private def getVariableSetForMultExpr(multExpr: MultiplicativeExpression): Set[String] = {
+  private def getVariableSetForMultExpr(multExpr: MultiplicativeExpression): Set[Int] = {
     Set() ++ multExpr.entries.collect {
-      case (s: String, v: Var) => v.name
+      case (s: String, v: Var) => v.index
     }
   }
 

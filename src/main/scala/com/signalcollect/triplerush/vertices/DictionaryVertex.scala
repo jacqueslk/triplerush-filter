@@ -54,14 +54,13 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   /**
    * Checks & removes all filters with no variables and adds a
-   * "global false" filter at the beginning if the query can
-   * not succeed (i.e. if a no var filter returned false)
+   * "global false" filter at the beginning if the query cannot
+   * succeed (i.e. if a no var filter returned false)
    */
   def summarizeNoVarFilters(queryId: Int) {
     val noVarPassed = removeNoVarFilters(queryId)
     if (!noVarPassed) {
       filterList(queryId) = FilterTriple.globalFalse +: filterList(queryId)
-      println(filterList(queryId))
     }
   }
   
@@ -119,7 +118,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
       return false
     }    
     for (i <- 0 until filterList(query.queryId).length) {
-      println("Checking " + filterList(query.queryId)(i))
+      println(s"Checking filter #$i")
       if (isRelevantFilter(query, newBindings, i) && !passesFilter(query, i)) {
         println("... filter did NOT pass")
         return false

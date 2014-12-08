@@ -17,15 +17,24 @@ import com.signalcollect.triplerush.Constraint
 import com.signalcollect.triplerush.ConditionalOrExpression
 //import com.signalcollect.triplerush.GlobalNegative
 
-object FilterParser extends RegexParsers {
+case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers {  
     val identifier: Parser[String] = "[-a-zA-Z0-9]*".r
     val integer: Parser[String] = "[0-9]+".r
+    
+    def getVariableId(name: String): Int = {
+      val id = variableNameToId.get(name)
+      if (!id.isDefined) {
+        throw new Exception(s"Unknown variable ?$name in filter!")
+      }
+      id.get
+    } 
     
     
     val variable: Parser[Var] = {
     "?" ~> identifier ^^ {
       case variableName =>
-        Var(variableName)
+        val id = getVariableId(variableName)
+        Var(id)
      }
     }
     
@@ -42,7 +51,7 @@ object FilterParser extends RegexParsers {
     }
     
     // [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
-    // [54] UnaryExpression ::=  '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
+    // [54] UnaryExpression ::= '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
     val multiplicativeExpression: Parser[MultiplicativeExpression] = {
       primaryExpression ~ rep(("*" | "/") ~ primaryExpression) ^^ {
         case lhs ~ otherValues =>

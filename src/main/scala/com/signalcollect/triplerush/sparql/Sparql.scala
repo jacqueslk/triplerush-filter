@@ -161,18 +161,7 @@ object Sparql {
         idToVariableName = idToVariableName :+ variableName
         id
       }
-    }
-    
-    // Convert variable to index for FILTERs
-    // Any variable not yet encoded should throw an error
-    def variableToIndex(variableName: String): Int = {
-      val idOption = variableNameToId.get(variableName)
-      if (idOption.isDefined) {
-        idOption.get
-      }
-      else throw new Exception("Unknown variable in filter")
-    }
-    
+    }    
 
     def dictionaryEncodePatterns(patterns: Seq[ParsedPattern]): Seq[TriplePattern] = {
 
@@ -231,12 +220,12 @@ object Sparql {
     
     // Needs to happen before 'containsEntryThatIsNotInDictionary' check, because it modifies that flag as a side effect.
     val encodedPatternUnions = select.patternUnions.map(dictionaryEncodePatterns)
+    val filterParser = FilterParser(variableNameToId)
     val filterTriples = select.patternUnions.map {
       union => union.collect {
         case ParsedPattern(StringLiteral(s), _, _, true) =>
           println("Now parsing " + s)
-          val constraint = FilterParser.parseAll(FilterParser.constraint, s)
-          println(constraint)
+          val constraint = filterParser.parseAll(filterParser.constraint, s)
           FilterTriple(constraint.get)
       }
     }
