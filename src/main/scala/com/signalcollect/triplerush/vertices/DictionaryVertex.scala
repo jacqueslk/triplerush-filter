@@ -116,33 +116,59 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   def checkAllFilters(query: Array[Int], newBindings: Array[Int]): Boolean = {
     if (filterList(query.queryId).length > 0 && filterList(query.queryId)(0).isGlobalFalse) {
       return false
-    }    
+    }
+    var bindingValues = Map[Int, String]()
     for (i <- 0 until filterList(query.queryId).length) {
+      val filter = filterList(query.queryId)(i)
+      val variableSet = filter.getVariableSet
       println(s"Checking filter #$i")
-      if (isRelevantFilter(query, newBindings, i) && !passesFilter(query, i)) {
-        println("... filter did NOT pass")
-        return false
+      if (isRelevantFilter(query, newBindings, variableSet)) {
+        println(s" Filter #$i is relevant")
+        bindingValues = addToBindingValues(bindingValues, query, variableSet)
+        if (!filter.passes(bindingValues)) {
+          println(s"  Filter #$i did not pass!")
+          return false
+        }
       }
     }
     true
   }
   
   /**
+   * Returns a map with new dictionary values that were requested,
+   * along with any other values present in `existingMap`.
+   */
+  def addToBindingValues(
+      existingMap: Map[Int, String],
+      query: Array[Int],
+      required: Set[Int]): Map[Int, String] = {
+    val newMap = scala.collection.mutable.Map[Int, String]()
+    required.foreach {
+      variable => if (!existingMap.get(variable).isDefined) {
+        newMap(variable) = varToValue(query, variable).get
+      }
+    }
+    existingMap ++ newMap.toMap
+  }
+  
+  
+  /**
    * Determines whether a filter is relevant by ensuring that
    * there is at least one variable in `newBindings` present
    * and that all information for the given filter is available
    */
-  def isRelevantFilter(query: Array[Int], newBindings: Array[Int], queryNr: Int): Boolean = {
-    val filter = filterList(query.queryId)(queryNr)
-    return allInfoAvailable(filter, query) && containsNewBinding(filter, newBindings) 
+  def isRelevantFilter(query: Array[Int], newBindings: Array[Int], variableSet: Set[Int]): Boolean = {
+    return allInfoAvailable(query, variableSet) && containsNewBinding(newBindings, variableSet)
   }
   
   /**
    * Checks that all necessary bindings are present to evaluate
    * a filter
    */
-  private def allInfoAvailable(filter: FilterTriple, query: Array[Int]): Boolean = {
-    // TODO
+  private def allInfoAvailable(query: Array[Int], variableSet: Set[Int]): Boolean = {
+    variableSet.foreach {
+      variable => if (query.getBinding(variable) == 0) return false
+    }
     true
   }
   
@@ -150,9 +176,8 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * Checks that a given filter contains at least one variable
    * given in `newBindings`
    */
-  private def containsNewBinding(filter: FilterTriple, newBindings: Array[Int]): Boolean = {
-    // TODO
-    false
+  private def containsNewBinding(newBindings: Array[Int], variableSet: Set[Int]): Boolean = {
+    variableSet.intersect(newBindings.toSet).size > 0
   }
 
   
@@ -187,23 +212,15 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   /**
    * Gets the value from the dictionary for a given
-   * binding in the query particle
+   * variable in the query particle
+   * @param query The query particle
+   * @param index The variable index to get the value for
    */
   def varToValue(query: Array[Int], index: Int): Option[String] = {
-    val varValue = if (index > 0) index else query.getBinding(index) // else also includes index=0
+    val varValue = query.getBinding(index)
     if (varValue > 0) 
      Some(d.get(varValue))
     else None
-  }
-  
-  /**
-   * Gets real values from the dictionary. lhs and rhs might be variables or literal
-   * integers. None is returned if a variable is not bound.
-   */
-  def getRealValues(query: Array[Int], filter: FilterTriple): (Option[String], Option[String]) = {
-    (
-      None, None // TODO -------
-    )
   }
   
   /**

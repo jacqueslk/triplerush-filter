@@ -136,7 +136,11 @@ case class FilterTriple(constraint: Constraint) {
       try {
         val number = bindings.get(unary.asInstanceOf[Var].index).get.toDouble
         return Some(number)
-      } catch { case _: Exception => return None }
+      } catch {
+        case e: Exception => 
+          println("getRealValue: Encountered " + e.getClass.getSimpleName() + s" for $unary with bindings $bindings")
+        return None
+      }
     }
     else if (unary.isInstanceOf[NumericLiteral]) {
       return Some(unary.asInstanceOf[NumericLiteral].number)

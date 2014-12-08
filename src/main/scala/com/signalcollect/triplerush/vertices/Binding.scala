@@ -112,6 +112,7 @@ trait Binding
   
   def findNewBindings(oldParticle: Array[Int], newParticle: Array[Int]): Seq[Int] = {
     val newBindings = ListBuffer[Int]()
+    println(oldParticle.mkString(" ") + "| vs |" + newParticle.mkString(" "))
     for (i <- 1 to oldParticle.numberOfBindings) {
       if (oldParticle.getBinding(i) != newParticle.getBinding(i)) {
         newBindings += i
