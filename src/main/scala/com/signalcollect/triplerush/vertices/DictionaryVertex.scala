@@ -47,7 +47,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * Registers filter list for a given query ID for later processing
    */
   override def registerFilters(queryId: Int, queryFilters: Seq[FilterTriple]) {
-    println(s"DV::registerFilters: Registering $queryFilters to query ID $queryId")
+    println("DV::registerFilters: Registering " + queryFilters.length + s" filters for ID $queryId")
     filterList(queryId) = queryFilters
     summarizeNoVarFilters(queryId)
   }
@@ -66,7 +66,10 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   /**
-   * Returns whether a filter doesn't make use of any variables
+   * Returns whether a filter doesn't make use of any variables.
+   * This is very inefficient, considering that we could immediately return
+   * false once we found one variable, rather than using `getVariableSet()`,
+   * which goes through the entire tree to find all variables.
    */
   private def isNoVarFilter(filter: FilterTriple): Boolean = filter.getVariableSet.isEmpty
   
@@ -78,7 +81,9 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     var i = 0
     var result = true
     filterList(queryId).foreach { e =>
+      println(s"Checking $e for no vars...")
       if (isNoVarFilter(e)) {
+        println("Has no variables")
         if (false) { // TODO
         //if (result && !e.passes(None, None)) {
           println(s"Filter $e did not pass!")

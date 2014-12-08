@@ -95,5 +95,10 @@ object FilterParser extends RegexParsers {
           val entryList = lhs +: rhs.collect { case e => e._2 }
           ConditionalOrExpression(entryList)
       }
-    }  
+    }
+    
+    // [27] Constraint ::= BrackettedExpression | BuiltInCall | FunctionCall
+    val constraint: Parser[Constraint] = {
+      conditionalOrExpression
+    }
 }

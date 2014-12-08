@@ -33,14 +33,14 @@ case class FilterTriple(constraint: Constraint) {
    * to be evaluated
    */
   def getVariableSet: Set[String] = {
-    val varSet = scala.collection.mutable.Set[String]()
     if (isArithmetic) {
       val condOr = constraint.asInstanceOf[ConditionalOrExpression]
-      condOr.entries.foreach {
-        condAnd => condAnd.entries.foreach {
-            relExp => varSet ++ getVariableSetForRelExpr(relExp)
+      val result = condOr.entries.flatMap {
+        condAnd => condAnd.entries.flatMap {
+          relExp => getVariableSetForRelExpr(relExp)
         }
       }
+      return result.toSet
     }
     Set()
   }
@@ -59,10 +59,10 @@ case class FilterTriple(constraint: Constraint) {
    * Gets the variable set for an AdditiveExpression object
    */
   private def getVariableSetForAddExpr(addExpr: AdditiveExpression): Set[String] = {
-    val list = addExpr.entries.collect {
-      case entry => getVariableSetForMultExpr(entry._2) 
+    val list = Set() ++ addExpr.entries.flatMap {
+      entry => getVariableSetForMultExpr(entry._2) 
     }
-    list.flatten.toSet
+    list.toSet
   }
   
   /**
@@ -70,7 +70,7 @@ case class FilterTriple(constraint: Constraint) {
    */
   private def getVariableSetForMultExpr(multExpr: MultiplicativeExpression): Set[String] = {
     val varSet = Set() ++ multExpr.entries.collect {
-      case primExpr: (String, Var) => primExpr._2.name
+      case (s: String, v: Var) => v.name
     }
     varSet
   }

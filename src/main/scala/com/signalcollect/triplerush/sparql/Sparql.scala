@@ -231,21 +231,15 @@ object Sparql {
     
     // Needs to happen before 'containsEntryThatIsNotInDictionary' check, because it modifies that flag as a side effect.
     val encodedPatternUnions = select.patternUnions.map(dictionaryEncodePatterns)
-    select.patternUnions.foreach {
-      x => x.foreach {
-        v => (
-          v match {
-            case ParsedPattern(StringLiteral(s), _, _, true) =>
-               println("Now parsing " + s)
-               println(
-                 FilterParser.parseAll(FilterParser.conditionalOrExpression, s)
-               )
-            case _ =>
-          }
-        )
+    val filterTriples = select.patternUnions.map {
+      union => union.collect {
+        case ParsedPattern(StringLiteral(s), _, _, true) =>
+          println("Now parsing " + s)
+          val constraint = FilterParser.parseAll(FilterParser.constraint, s)
+          println(constraint)
+          FilterTriple(constraint.get)
       }
     }
-    println("Done parsing")
 
     if (containsEntryThatIsNotInDictionary) {
       None
@@ -259,7 +253,7 @@ object Sparql {
           idToVariableName = idToVariableName,
           isDistinct = parsed.select.isDistinct,
           orderBy = select.orderBy.map(variableNameToId),
-          filters = List[Seq[FilterTriple]](), // TODO add back filters
+          filters = filterTriples,
           limit = select.limit))
     }
   }
