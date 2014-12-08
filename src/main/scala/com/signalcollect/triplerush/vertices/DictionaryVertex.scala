@@ -80,13 +80,12 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   private def removeNoVarFilters(queryId: Int): Boolean = {
     var i = 0
     var result = true
-    filterList(queryId).foreach { e =>
-      println(s"Checking $e for no vars...")
-      if (isNoVarFilter(e)) {
+    filterList(queryId).foreach { filter =>
+      println(s"Checking filter #$i for no vars...")
+      if (isNoVarFilter(filter)) {
         println("Has no variables")
-        if (false) { // TODO
-        //if (result && !e.passes(None, None)) {
-          println(s"Filter $e did not pass!")
+        if (!filter.passes(Map())) {
+          println(s"Filter #$i did not pass!")
           result = false
         }
         removeFilterFromList(queryId, i)
