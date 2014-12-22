@@ -5,43 +5,49 @@ import org.scalatest.FlatSpec
 import com.signalcollect.triplerush.sparql.Sparql
 
 /**
- * Tests basic arithmetic capabilities of SPARQL filters,
- * namely the filters <=, <, =, !=, > and >=
+ * Tests the arithmetic capabilities of the SPARQL filter,
+ * such as division or subtraction with or without variables.
  * The SPARQL queries also include various combinations of
  * optional periods (.) between filter triple and FILTER
  * to test the parser rule.
  */
-class FilterArithmeticBasicTest extends FlatSpec with Checkers {
+class FilterArithmeticMathTest extends FlatSpec with Checkers {
   val debugMode = false
   
   private def prepareTripleRush: TripleRush = {
     val tr = new TripleRush
-    tr.addTriple("http://a", "http://p", "http://b")
-    tr.addTriple("http://a", "http://p", "http://c")
-    tr.addTriple("http://a", "http://p", "http://d")
-    tr.addTriple("http://b", "http://p", "123")
-    tr.addTriple("http://b", "http://p", "14")
-    tr.addTriple("http://b", "http://p", "1")
+    tr.addTriple("http://al", "http://nr1",  "9")
+    tr.addTriple("http://be", "http://nr1","-16")
+    tr.addTriple("http://ch", "http://nr1", "25")
+    tr.addTriple("http://de", "http://nr1", "36")
+    tr.addTriple("http://ec", "http://nr1", "49")
+
+    tr.addTriple("http://al", "http://nr2", "18")
+    tr.addTriple("http://be", "http://nr2", "81")
+    tr.addTriple("http://ch", "http://nr2", "31")
+    tr.addTriple("http://de", "http://nr2", "36")
+    tr.addTriple("http://ec", "http://nr2", "-5")
     tr.prepareExecution
     tr
   }
   
-  "Arithmetic filters" should "process the <= filter" in {
+  "Arithmetic filters" should "process addition properly" in {
     implicit val tr = prepareTripleRush
     try {
       val queryString = """
-        SELECT ?A ?T ?B
+        SELECT ?A ?B ?C
       	WHERE {
-          <http://a> <http://p> ?A .
-          ?A ?T ?B
-          FILTER(?B*2 <= 14*2)
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C .
+          FILTER(?B+?B <= ?C)
         }"""
-      
+      println("--------- SPARQL.get --------------")
       val query = Sparql(queryString).get
+      println("--------- .resultIterator ------------")
       val result = query.resultIterator.toList
 
       assert(result.length == 2)
-      result.foreach( e => assert(e("B").toInt <= 14) )
+      result.foreach( e => assert(e("B").toInt*2 <= e("C").toInt) )
     } finally {
       tr.shutdown
     }

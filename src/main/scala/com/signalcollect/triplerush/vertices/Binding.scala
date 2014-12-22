@@ -25,6 +25,7 @@ import com.signalcollect.Edge
 import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
+import com.signalcollect.triplerush.TriplePattern
 import com.signalcollect.triplerush.FilterPending
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
@@ -112,7 +113,6 @@ trait Binding
   
   def findNewBindings(oldParticle: Array[Int], newParticle: Array[Int]): Seq[Int] = {
     val newBindings = ListBuffer[Int]()
-    println(oldParticle.mkString(" ") + "| vs |" + newParticle.mkString(" "))
     for (i <- 1 to oldParticle.numberOfBindings) {
       if (oldParticle.getBinding(i) != newParticle.getBinding(i)) {
         newBindings += i
@@ -138,14 +138,21 @@ trait Binding
       if (newBindings.length == 0) {
         graphEditor.sendSignal(boundParticle, destination)
       }                                       
-      else {
-//        import Array.concat
-//        val destInfo = new EfficientIndexPattern(destination) 
-//        val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destInfo.extractFirst :+ destInfo.extractSecond
-//        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
-        
-        //FilterPending alternative: (instead of everything in else{ })
-        graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
+      else {        
+        //  rootAddress = ID of TriplePattern(0, 0, 0)
+        val rootAddress = -9223372026117357568L
+        if (destination == rootAddress) {
+          // Immediately send query to dictionary vertex if it is routed to the root node;
+          // this prevents an error from occuring in AbstractQueryVertex::deliverSignalWithoutSource()
+          import Array.concat
+          val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ rootAddress.extractFirst :+ rootAddress.extractSecond
+          graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+        }
+        else {
+          // If not root, send signal to the vertex first, which will then check with the 
+          // dictionary vertex. This way, no filters are checked for vertices that don't exist.
+          graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
+        }
       }
     }
 

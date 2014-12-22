@@ -68,6 +68,7 @@ abstract class IndexVertex[State](val id: Long)
 
   def cardinality: Int
   
+  // Used by the dictionary vertex to register filters for a query
   def registerFilters(queryId: Int, filters: Seq[FilterTriple]) = {}
 
   /**
@@ -107,7 +108,6 @@ abstract class IndexVertex[State](val id: Long)
       case query: Array[Int] =>
         processQuery(query, graphEditor)
       case fp: FilterPending =>
-        // unused currently
         import Array.concat
         val idInfo = new EfficientIndexPattern(id) 
         val queryWithMetaInfo = concat(fp.query, fp.newBindings) :+ fp.newBindings.length :+ idInfo.extractFirst :+ idInfo.extractSecond
