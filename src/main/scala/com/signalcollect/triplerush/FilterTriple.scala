@@ -1,18 +1,122 @@
 package com.signalcollect.triplerush
 
-sealed trait UnaryExpression
-case class BuiltInCall(name: String) extends UnaryExpression
-case class Var(index: Int) extends UnaryExpression
-case class NumericLiteral(number: Int) extends UnaryExpression
+sealed trait UnaryExpression {
+  def getRealValue(bindings: Map[Int, String]): Option[Double]
+}
+case class BuiltInCall(name: String) extends UnaryExpression {
+  def getRealValue(bindings: Map[Int, String]): Option[Double] = {
+    throw new Exception("Built in call not yet supported")
+  }
+}
+case class Var(index: Int) extends UnaryExpression {
+  def getRealValue(bindings: Map[Int, String]): Option[Double] = {
+    try {
+      val number = bindings.get(index).get.toDouble
+      return Some(number)
+    } catch {
+      case e: Exception => 
+        println("getRealValue: Encountered " + e.getClass.getSimpleName() + s" for $this with bindings $bindings")
+      return None
+    }
+  }
+}
+case class NumericLiteral(number: Int) extends UnaryExpression {
+  def getRealValue(bindings: Map[Int, String]): Option[Double] = Some(number)
+}
 
-case class MultiplicativeExpression(entries: Seq[(String, UnaryExpression)])
-case class AdditiveExpression(entries: Seq[(String, MultiplicativeExpression)])
-case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: Option[AdditiveExpression])
-case class ConditionalAndExpression(entries: Seq[RelationalExpression])
+case class MultiplicativeExpression(entries: Seq[(String, UnaryExpression)]) {
+  def getVariableSet: Set[Int] = {
+    Set() ++ entries.collect {
+      case (s: String, v: Var) => v.index
+    }
+  }
+  def compute(bindings: Map[Int, String]): Option[Double] = {
+    val optionResult = entries(0)._2.getRealValue(bindings)
+    if (!optionResult.isDefined) return None
+    var result = optionResult.get
+    
+    for (i <- 1 until entries.length) {      
+      val entry = entries(i)
+      val realValue = entry._2.getRealValue(bindings)
+      if (!realValue.isDefined) return None
+      
+      if (entry._1 == "*") result *= realValue.get
+      else                 result /= realValue.get
+    }
+    Some(result)
+  }
+}
+case class AdditiveExpression(entries: Seq[(String, MultiplicativeExpression)]) {
+  def getVariableSet: Set[Int] = {
+    Set() ++ entries.flatMap {
+      entry => entry._2.getVariableSet 
+    }
+  }
+  def compute(bindings: Map[Int, String]): Option[Double] = {
+    var result = 0.0
+    entries.foreach {
+      multExpr =>
+        val multExprVal = multExpr._2.compute(bindings)
+        if (!multExprVal.isDefined) return None
+        if (multExpr._1 == "-") {
+          result -= multExprVal.get
+        } else { // matches "+" as well as first empty entry
+          result += multExprVal.get
+        }
+    }
+    Some(result)
+  }
+}
+case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: Option[AdditiveExpression]) {
+  def getVariableSet: Set[Int] = {
+    val lhsSet = lhs.getVariableSet
+    val rhsSet = if(rhs.isDefined) rhs.get.getVariableSet else Set[Int]()
+    (lhsSet ++ rhsSet)
+  }
+  def passes(bindings: Map[Int, String]): Boolean = {
+    if (!rhs.isDefined) return false // ?
+    val lhsVal = lhs.compute(bindings)
+    val rhsVal = rhs.get.compute(bindings)
+    if (!lhsVal.isDefined || !rhsVal.isDefined) return false
+    checkArithmeticOperator(lhsVal.get, rhsVal.get)
+  }
+  private def checkArithmeticOperator(lhsValue: Double, rhsValue: Double): Boolean = {
+    operator match {
+      case "="  => lhsValue == rhsValue
+      case ">"  => lhsValue >  rhsValue
+      case "<"  => lhsValue <  rhsValue
+      case "!=" => lhsValue != rhsValue
+      case ">=" => lhsValue >= rhsValue
+      case "<=" => lhsValue <= rhsValue
+      case _ => throw new Exception(s"Unknown operator $operator")
+    }
+  }
+}
+case class ConditionalAndExpression(entries: Seq[RelationalExpression]) {
+  def passes(bindings: Map[Int, String]): Boolean = {
+    entries.foreach {
+      relExpr => if (!relExpr.passes(bindings)) return false
+    }
+    true
+  }
+}
 
-sealed trait Constraint
-case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint
-case class GlobalNegative() extends Constraint
+sealed trait Constraint {
+  def passes(bindings: Map[Int, String]): Boolean
+}
+case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint {
+  def passes(bindings: Map[Int, String]): Boolean = {
+    entries.foreach {
+      condAnd => if (condAnd.passes(bindings)) {
+        return true
+      }
+    }
+    false
+  }
+}
+case class GlobalNegative() extends Constraint {
+    def passes(bindings: Map[Int, String]): Boolean = false
+}
 
 
 object FilterTriple {
@@ -37,7 +141,7 @@ case class FilterTriple(constraint: Constraint) {
       val condOr = constraint.asInstanceOf[ConditionalOrExpression]
       val result = Set() ++ condOr.entries.flatMap {
         condAnd => condAnd.entries.flatMap {
-          relExpr => getVariableSetForRelExpr(relExpr)
+          relExpr => relExpr.getVariableSet
         }
       }
       return result
@@ -55,127 +159,6 @@ case class FilterTriple(constraint: Constraint) {
    *  e.g. B => 12 if ?B is 12.
    */
   def passes(bindings: Map[Int, String]): Boolean = {
-    if (isArithmetic) {
-      constraint.asInstanceOf[ConditionalOrExpression].entries.foreach {
-        condAnd => if (passesForCondAnd(condAnd, bindings)) {
-          return true
-        }
-      }
-      false
-    } else if (isGlobalFalse) {
-      false
-    } else {
-      true
-    }
+    constraint.passes(bindings)
   }
-  
-  
-  // ===================
-  // Passes
-  // ===================
-  private def passesForCondAnd(condAnd: ConditionalAndExpression, bindings: Map[Int, String]): Boolean = {
-    condAnd.entries.foreach {
-      relExpr => if (!passesForRelExpr(relExpr, bindings)) return false
-    }
-    true
-  }
-  
-  private def passesForRelExpr(relExpr: RelationalExpression, bindings: Map[Int, String]): Boolean = {
-    if (!relExpr.rhs.isDefined) return false // ?
-    val lhs = computeAddExpr(relExpr.lhs, bindings)
-    val rhs = computeAddExpr(relExpr.rhs.get, bindings)
-    if (!lhs.isDefined || !rhs.isDefined) return false
-    checkArithmeticOperator(lhs.get, relExpr.operator, rhs.get)
-  }
-  
-  private def checkArithmeticOperator(lhs: Double, operator: String, rhs: Double): Boolean = {
-    operator match {
-      case "="  => lhs == rhs
-      case ">"  => lhs >  rhs
-      case "<"  => lhs <  rhs
-      case "!=" => lhs != rhs
-      case ">=" => lhs >= rhs
-      case "<=" => lhs <= rhs
-      case _ => throw new Exception(s"Unknown operator $operator")
-    }
-  }
-  
-  private def computeAddExpr(addExpr: AdditiveExpression, bindings: Map[Int, String]): Option[Double] = {
-    var result = 0.0
-    addExpr.entries.foreach {
-      multExpr =>
-        val multExprVal = computeMultExpr(multExpr._2, bindings)
-        if (!multExprVal.isDefined) return None
-        if (multExpr._1 == "-") {
-          result -= multExprVal.get
-        } else { // matches "+" as well as first empty entry
-          result += multExprVal.get
-        }
-    }
-    Some(result)
-  }
-  
-  private def computeMultExpr(multExpr: MultiplicativeExpression, bindings: Map[Int, String]): Option[Double] = {
-    val optionResult = getRealValue(multExpr.entries(0)._2, bindings)
-    if (!optionResult.isDefined) return None
-    var result = optionResult.get
-    
-    for (i <- 1 until multExpr.entries.length) {      
-      val entry = multExpr.entries(i)
-      val realValue = getRealValue(entry._2, bindings)
-      if (!realValue.isDefined) return None
-      
-      if (entry._1 == "*") result *= realValue.get
-      else                 result /= realValue.get
-    }
-    Some(result)
-  }
-  
-  private def getRealValue(unary: UnaryExpression, bindings: Map[Int, String]): Option[Double] = {
-    if (unary.isInstanceOf[Var]) {
-      try {
-        val number = bindings.get(unary.asInstanceOf[Var].index).get.toDouble
-        return Some(number)
-      } catch {
-        case e: Exception => 
-          println("getRealValue: Encountered " + e.getClass.getSimpleName() + s" for $unary with bindings $bindings")
-        return None
-      }
-    }
-    else if (unary.isInstanceOf[NumericLiteral]) {
-      return Some(unary.asInstanceOf[NumericLiteral].number)
-    }
-    None
-  }
-  
-  // ===================
-  // Variable Set
-  // ===================
-  /**
-   * Gets the variable set of a RelationalExpression object
-   */
-  private def getVariableSetForRelExpr(relExpr: RelationalExpression): Set[Int] = {
-    val lhsSet = getVariableSetForAddExpr(relExpr.lhs)
-    val rhsSet = if(relExpr.rhs.isDefined) getVariableSetForAddExpr(relExpr.rhs.get) else Set[Int]()
-    (lhsSet ++ rhsSet)
-  }
-  
-  /**
-   * Gets the variable set of an AdditiveExpression object
-   */
-  private def getVariableSetForAddExpr(addExpr: AdditiveExpression): Set[Int] = {
-    Set() ++ addExpr.entries.flatMap {
-      entry => getVariableSetForMultExpr(entry._2) 
-    }
-  }
-  
-  /**
-   * Gets the variable set of a MultiplicativeExpression object
-   */
-  private def getVariableSetForMultExpr(multExpr: MultiplicativeExpression): Set[Int] = {
-    Set() ++ multExpr.entries.collect {
-      case (s: String, v: Var) => v.index
-    }
-  }
-
 }
