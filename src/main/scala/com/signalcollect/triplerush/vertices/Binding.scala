@@ -23,9 +23,7 @@ package com.signalcollect.triplerush.vertices
 import scala.collection.mutable.ListBuffer
 import com.signalcollect.Edge
 import com.signalcollect.GraphEditor
-import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
-import com.signalcollect.triplerush.TriplePattern
 import com.signalcollect.triplerush.FilterPending
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.triplerush.QueryIds
@@ -126,7 +124,6 @@ trait Binding
     newBindings: Seq[Int],
     graphEditor: GraphEditor[Long, Any]) {
 
-//    println("routeSuccessfullyBound: boundParticle=" + boundParticle.mkString(", "))
     if (boundParticle.isResult && !boundParticle.isBindingQuery) {
       val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
       graphEditor.sendSignal(1, queryVertexId)
@@ -137,30 +134,25 @@ trait Binding
                                               else boundParticle.routingAddress
       if (newBindings.length == 0) {
         graphEditor.sendSignal(boundParticle, destination)
-      }                                       
-      else {        
-        //  rootAddress = ID of TriplePattern(0, 0, 0)
-        val rootAddress = -9223372026117357568L
-        if (destination == rootAddress) {
-          // Immediately send query to dictionary vertex if it is routed to the root node;
-          // this prevents an error from occuring in AbstractQueryVertex::deliverSignalWithoutSource()
-          import Array.concat
-          val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ rootAddress.extractFirst :+ rootAddress.extractSecond
-          graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
-        }
-        else {
-          // If not root, send signal to the vertex first, which will then check with the 
-          // dictionary vertex. This way, no filters are checked for vertices that don't exist.
-          graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
-        }
+      }
+      else if (boundParticle.isResult) {        
+        // Immediately send query to dictionary vertex if it is to be sent back to the query vertex;
+        // we can avoid modifying the query vertices thanks to this
+        import Array.concat
+        val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destination.extractFirst :+ destination.extractSecond
+        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+      }
+      else {
+        // If not root, send signal to the vertex first, which will then check with the 
+        // dictionary vertex. This way, no filters are checked for vertices that don't exist.
+        graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
       }
     }
 
+// Old code
 //    if (boundParticle.isResult) {
 //      // Query successful, send to query vertex.
 //      val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
-////      val eip = new EfficientIndexPattern(queryVertexId).toTriplePattern
-////      println(s"is result; send tickets to $eip")
 //      if (boundParticle.isBindingQuery) {
 //        graphEditor.sendSignal(boundParticle, queryVertexId)
 //      } else {
@@ -168,8 +160,6 @@ trait Binding
 //        graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
 //      }
 //    } else {
-////      val eip = new EfficientIndexPattern(boundParticle.routingAddress).toTriplePattern
-////      println(s"NOT result; sending boundParticle to $eip")
 //      graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
 //    }
   }

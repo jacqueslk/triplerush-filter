@@ -24,7 +24,6 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.CardinalityCache
 import com.signalcollect.triplerush.CardinalityReply
 import com.signalcollect.triplerush.CardinalityRequest
-import com.signalcollect.triplerush.FilterPending
 import com.signalcollect.triplerush.FilterRegistration
 import com.signalcollect.triplerush.FilterTriple
 import com.signalcollect.triplerush.PredicateStatsCache
