@@ -114,6 +114,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * bound variables
    */
   def checkAllFilters(query: Array[Int], newBindings: Array[Int]): Boolean = {
+    if (!filterList.contains(query.queryId)) return true
     if (filterList(query.queryId).length > 0 && filterList(query.queryId)(0).isGlobalFalse) {
       return false
     }
@@ -221,18 +222,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     if (varValue > 0) 
      Some(d.get(varValue))
     else None
-  }
-  
-  /**
-   * Entry point method to test if a filter passes.
-   * This assumes that it has been checked with isRelevantFilter()
-   * beforehand [or, more specifically, with allInfoAvailable()].
-   */
-  def passesFilter(query: Array[Int], filterIndex: Int): Boolean = {
-    val filter = filterList(query.queryId)(filterIndex)
-    //val (lhs, rhs) = getRealValues(query, filter)
-    //filter.passes(lhs, rhs)
-    true
   }
   
 }
