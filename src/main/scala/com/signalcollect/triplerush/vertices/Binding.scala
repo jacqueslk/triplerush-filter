@@ -71,7 +71,7 @@ trait Binding
       graphEditor.sendSignal(edgeCount, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
-//      println(s"bindQueryToAllTriples for " + query.mkString(" "))
+      println(s"bindQueryToAllTriples for " + query.mkString(" "))
       val edges = edgeCount
       val totalTickets = query.tickets
       val absoluteValueOfTotalTickets = if (totalTickets < 0) -totalTickets else totalTickets  // inlined math.abs
@@ -81,6 +81,7 @@ trait Binding
       val averageTicketQuery = query.copyWithTickets(avg, complete)
       val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
       def bind(childDelta: Int) {
+        println("childDelta = " + childDelta)
         if (extras > 0) {
           extras -= 1
           handleQueryBinding(childDelta, aboveAverageTicketQuery, graphEditor)
@@ -97,7 +98,7 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
-//    println("handleQueryBinding: result = " + boundParticle.mkString(", ") + s"; childDelta = $childDelta")
+    println("handleQueryBinding: result = " + boundParticle.mkString(", ") + s"; childDelta = $childDelta")
     if (boundParticle != null) {
       val newBinds = findNewBindings(query, boundParticle)
       routeSuccessfullyBound(boundParticle, newBinds, graphEditor)

@@ -106,13 +106,14 @@ abstract class IndexVertex[State](val id: Long)
     
     signal match {
       case query: Array[Int] =>
+        println("Got query " + query.mkString(" "))
         processQuery(query, graphEditor)
       case fp: FilterPending =>
         import Array.concat
         val idInfo = new EfficientIndexPattern(id) 
         val queryWithMetaInfo = concat(fp.query, fp.newBindings) :+ fp.newBindings.length :+ idInfo.extractFirst :+ idInfo.extractSecond
         graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
-        println("Routing " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
+        println("FP " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
       case fr: FilterRegistration =>
         registerFilters(fr.queryId, fr.filters)
       case cr: CardinalityRequest =>
