@@ -31,9 +31,10 @@ class FilterArithmeticMathTest extends FlatSpec with Checkers {
     tr
   }
   
-  "Arithmetic filters" should "process addition properly" in {
+  "Arithmetic filters" should "process addition and subtraction properly" in {
     implicit val tr = prepareTripleRush
     try {
+      // Simple addition check with <= 
       val queryString = """
         SELECT ?A ?B ?C
       	WHERE {
@@ -41,13 +42,47 @@ class FilterArithmeticMathTest extends FlatSpec with Checkers {
           ?A <http://nr2> ?C .
           FILTER(?B+?B <= ?C)
         }"""
-      println("--------- SPARQL.get --------------")
+      
       val query = Sparql(queryString).get
-      println("--------- .resultIterator ------------")
       val result = query.resultIterator.toList
 
       assert(result.length == 2)
       result.foreach( e => assert(e("B").toInt*2 <= e("C").toInt) )
+      
+      // 0-?var with OR operator
+      val queryString2 = """
+        SELECT ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C
+          FILTER(0 - ?B>0 || 0-?C > 0)
+        }"""
+      
+      val query2 = Sparql(queryString2).get
+      val result2 = query2.resultIterator.toList
+      
+      assert(result2.length == 2)
+      result2.foreach( e => assert(e("B").toInt < 0 || e("C").toInt < 0) )
+      
+      // addition with AND operator
+      val queryString3 = """
+        SELECT ?A ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B
+          FILTER(?B + ?C > 20 && ?B < 40 && ?C >= 20)
+          ?A <http://nr2> ?C .
+        }"""
+      
+      val query3 = Sparql(queryString3).get
+      val result3 = query3.resultIterator.toList
+      
+      assert(result3.length == 3)
+      result3.foreach( e => assert(
+                    e("B").toInt + e("C").toInt > 50
+                 && e("B").toInt < 40
+                 && e("C").toInt >= 20
+      ))
+      
     } finally {
       tr.shutdown
     }
