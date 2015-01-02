@@ -87,6 +87,10 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
     if (!rhsVal.isDefined) return false
     checkArithmeticOperator(lhsVal.get, rhsVal.get)
   }
+  def getRealValue(bindings: Map[Int, String]): Option[Double] = {
+    if (rhs.isDefined) return None
+    return lhs.compute(bindings)
+  }
   private def checkArithmeticOperator(lhsValue: Double, rhsValue: Double): Boolean = {
     operator match {
       case "="  => lhsValue == rhsValue
@@ -106,12 +110,16 @@ case class ConditionalAndExpression(entries: Seq[RelationalExpression]) {
     }
     true
   }
+  def getRealValue(bindings: Map[Int, String]): Option[Double] = {
+    if (entries.size != 1) return None
+    return entries(0).getRealValue(bindings)
+  }
 }
 
 sealed trait Constraint {
   def passes(bindings: Map[Int, String]): Boolean
 }
-case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint {
+case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint with PrimaryExpression {
   def passes(bindings: Map[Int, String]): Boolean = {
     entries.foreach {
       condAnd => if (condAnd.passes(bindings)) {
@@ -119,6 +127,16 @@ case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) exten
       }
     }
     false
+  }
+  /**
+   * This method is used to get the value in a bracketed expression, e.g.
+   * in the expression "5 * (?A + 3)"
+   * Usually, ConditionalOrExpression is a boolean but in certain arithmetic
+   * contexts we do need the real value from the RelationalExpression it holds.
+   */
+  def getRealValue(bindings: Map[Int, String]): Option[Double] = {
+    if (entries.size != 1) return None
+    return entries(0).getRealValue(bindings)
   }
 }
 case class GlobalNegative() extends Constraint {
