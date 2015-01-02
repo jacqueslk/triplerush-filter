@@ -13,7 +13,7 @@ import com.signalcollect.triplerush.QueryParticle.arrayToParticle
 import com.signalcollect.util.SplayIntSet
 
 // FilterTriple case classes / traits
-import com.signalcollect.triplerush.UnaryExpression
+import com.signalcollect.triplerush.PrimaryExpression
 import com.signalcollect.triplerush.BuiltInCall
 import com.signalcollect.triplerush.Var
 import com.signalcollect.triplerush.NumericLiteral

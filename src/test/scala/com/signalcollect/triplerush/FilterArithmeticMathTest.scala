@@ -78,7 +78,7 @@ class FilterArithmeticMathTest extends FlatSpec with Checkers {
       
       assert(result3.length == 3)
       result3.foreach( e => assert(
-                    e("B").toInt + e("C").toInt > 50
+                    e("B").toInt + e("C").toInt > 20
                  && e("B").toInt < 40
                  && e("C").toInt >= 20
       ))

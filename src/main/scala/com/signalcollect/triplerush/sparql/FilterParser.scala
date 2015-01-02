@@ -3,7 +3,7 @@ package com.signalcollect.triplerush.sparql
 import scala.util.parsing.combinator.RegexParsers
 
 // Filter Triple case classes / traits
-import com.signalcollect.triplerush.UnaryExpression
+import com.signalcollect.triplerush.PrimaryExpression
 import com.signalcollect.triplerush.BuiltInCall
 import com.signalcollect.triplerush.Var
 import com.signalcollect.triplerush.NumericLiteral
@@ -46,23 +46,24 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
   }
   
   // [55] PrimaryExpression ::= BrackettedExpression | BuiltInCall | IRIrefOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
-  val primaryExpression: Parser[UnaryExpression] = {
+  val primaryExpression: Parser[PrimaryExpression] = {
     variable | numericLiteral
   }
   
   // [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
   // [54] UnaryExpression ::= '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
   val multiplicativeExpression: Parser[MultiplicativeExpression] = {
-    primaryExpression ~ rep(("*" | "/") ~ primaryExpression) ^^ {
-      case lhs ~ otherValues =>
-        val entryList = (("", lhs)) +: otherValues.collect {
-           case e => (e._1, e._2)
+    ("!" | "+" | "-" | "") ~ primaryExpression ~ rep(("*" | "/") ~ ("!" | "+" | "-" | "") ~ primaryExpression) ^^ {
+      case prefix ~ lhs ~ otherValues =>
+        val entryList = (("", prefix, lhs)) +: otherValues.collect {
+           case e => (e._1._1, e._1._2, e._2)
         }
         MultiplicativeExpression(entryList)
     }
   }
   
   // [52] AdditiveExpression ::= MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | NumericLiteralPositive | NumericLiteralNegative )*
+  //! Missing NumericLiteralPositive and -Negative here. !//
   val additiveExpression: Parser[AdditiveExpression] = {
     multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
       case lhs ~ otherValues =>
@@ -107,6 +108,8 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
   }
   
   // [27] Constraint ::= BrackettedExpression | BuiltInCall | FunctionCall
+  // [56] BrackettedExpression ::= '(' Expression ')'
+  // [46] Expression ::= ConditionalOrExpression
   val constraint: Parser[Constraint] = {
     conditionalOrExpression
   }

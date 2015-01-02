@@ -1,14 +1,14 @@
 package com.signalcollect.triplerush
 
-sealed trait UnaryExpression {
+sealed trait PrimaryExpression {
   def getRealValue(bindings: Map[Int, String]): Option[Double]
 }
-case class BuiltInCall(name: String) extends UnaryExpression {
+case class BuiltInCall(name: String) extends PrimaryExpression {
   def getRealValue(bindings: Map[Int, String]): Option[Double] = {
     throw new Exception("Built in call not yet supported")
   }
 }
-case class Var(index: Int) extends UnaryExpression {
+case class Var(index: Int) extends PrimaryExpression {
   def getRealValue(bindings: Map[Int, String]): Option[Double] = {
     try {
       val number = bindings.get(index).get.toDouble
@@ -20,24 +20,26 @@ case class Var(index: Int) extends UnaryExpression {
     }
   }
 }
-case class NumericLiteral(number: Int) extends UnaryExpression {
+case class NumericLiteral(number: Int) extends PrimaryExpression {
   def getRealValue(bindings: Map[Int, String]): Option[Double] = Some(number)
 }
 
-case class MultiplicativeExpression(entries: Seq[(String, UnaryExpression)]) {
+// String1 = * or /, empty for first entry
+// String2 = !, +, - or empty, it is a prefix to the primary expression
+case class MultiplicativeExpression(entries: Seq[(String, String, PrimaryExpression)]) {
   def getVariableSet: Set[Int] = {
     Set() ++ entries.collect {
-      case (s: String, v: Var) => v.index
+      case (s: String, t: String, v: Var) => v.index
     }
   }
   def compute(bindings: Map[Int, String]): Option[Double] = {
-    val optionResult = entries(0)._2.getRealValue(bindings)
+    val optionResult = entries(0)._3.getRealValue(bindings)
     if (!optionResult.isDefined) return None
     var result = optionResult.get
     
     for (i <- 1 until entries.length) {      
       val entry = entries(i)
-      val realValue = entry._2.getRealValue(bindings)
+      val realValue = entry._3.getRealValue(bindings)
       if (!realValue.isDefined) return None
       
       if (entry._1 == "*") result *= realValue.get
@@ -74,10 +76,15 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
     (lhsSet ++ rhsSet)
   }
   def passes(bindings: Map[Int, String]): Boolean = {
-    if (!rhs.isDefined) return false // ?
     val lhsVal = lhs.compute(bindings)
+    if (!rhs.isDefined || !lhsVal.isDefined) {
+      // Return false if value is 0 or NaN
+      // http://www.w3.org/TR/xpath-functions/#func-boolean
+      // via http://www.w3.org/TR/rdf-sparql-query/#ebv
+      return (lhsVal.isDefined && lhsVal.get != 0) 
+    }
     val rhsVal = rhs.get.compute(bindings)
-    if (!lhsVal.isDefined || !rhsVal.isDefined) return false
+    if (!rhsVal.isDefined) return false
     checkArithmeticOperator(lhsVal.get, rhsVal.get)
   }
   private def checkArithmeticOperator(lhsValue: Double, rhsValue: Double): Boolean = {
