@@ -27,7 +27,7 @@ import com.signalcollect.triplerush.CardinalityRequest
 import com.signalcollect.triplerush.ChildIdRequest
 import com.signalcollect.triplerush.FilterRegistration
 import com.signalcollect.triplerush.FilterPending
-import com.signalcollect.triplerush.FilterTriple
+import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.ObjectCountSignal
 import com.signalcollect.triplerush.PlaceholderEdge
 import com.signalcollect.triplerush.SubjectCountSignal
@@ -69,7 +69,7 @@ abstract class IndexVertex[State](val id: Long)
   def cardinality: Int
   
   // Used by the dictionary vertex to register filters for a query
-  def registerFilters(queryId: Int, filters: Seq[FilterTriple]) = {}
+  def registerFilters(queryId: Int, filters: Seq[Filter]) = {}
 
   /**
    * Default reply, is only overridden by SOIndex.

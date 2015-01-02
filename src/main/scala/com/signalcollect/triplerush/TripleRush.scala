@@ -250,7 +250,7 @@ case class TripleRush(
     query: Seq[TriplePattern],
     optimizerOption: Option[Optimizer] = None,
     numberOfSelectVariables: Option[Int] = None,
-    filters: Seq[FilterTriple] = Seq(),
+    filters: Seq[Filter] = Seq(),
     tickets: Long = Long.MaxValue): Iterator[Array[Int]] = {
     assert(canExecute, "Call TripleRush.prepareExecution before executing queries.")
     val selectVariables = numberOfSelectVariables.getOrElse(

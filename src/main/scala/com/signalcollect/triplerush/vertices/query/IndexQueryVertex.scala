@@ -21,7 +21,6 @@ package com.signalcollect.triplerush.vertices.query
 
 import scala.concurrent.Promise
 import com.signalcollect.GraphEditor
-import com.signalcollect.triplerush.TriplePattern
 import com.signalcollect.triplerush.QueryIds
 import com.signalcollect.triplerush.ChildIdRequest
 import com.signalcollect.triplerush.ChildIdReply

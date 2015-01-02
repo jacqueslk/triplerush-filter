@@ -25,7 +25,7 @@ import com.signalcollect.triplerush.CardinalityCache
 import com.signalcollect.triplerush.CardinalityReply
 import com.signalcollect.triplerush.CardinalityRequest
 import com.signalcollect.triplerush.FilterRegistration
-import com.signalcollect.triplerush.FilterTriple
+import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.PredicateStatsCache
 import com.signalcollect.triplerush.PredicateStatsReply
 import com.signalcollect.triplerush.QueryParticle
@@ -40,7 +40,7 @@ abstract class AbstractQueryVertex[StateType](
   val query: Seq[TriplePattern],
   val tickets: Long,
   val numberOfSelectVariables: Int,
-  val filters: Seq[FilterTriple],
+  val filters: Seq[Filter],
   val optimizer: Option[Optimizer]) extends BaseVertex[StateType] {
 
   val numberOfPatternsInOriginalQuery: Int = query.length

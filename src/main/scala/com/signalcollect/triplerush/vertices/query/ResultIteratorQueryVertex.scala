@@ -23,7 +23,7 @@ import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.QueryIds
 import com.signalcollect.triplerush.optimizers.Optimizer
 import com.signalcollect.triplerush.util.ResultIterator
-import com.signalcollect.triplerush.FilterTriple
+import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.TriplePattern
 
 class ResultIteratorQueryVertex(
@@ -32,7 +32,7 @@ class ResultIteratorQueryVertex(
   tickets: Long,
   resultIterator: ResultIterator,
   optimizer: Option[Optimizer],
-  filters: Seq[FilterTriple])
+  filters: Seq[Filter])
   extends AbstractQueryVertex[ResultIterator](query, tickets, numberOfSelectVariables, filters, optimizer) {
 
   final val id = QueryIds.embedQueryIdInLong(QueryIds.nextQueryId)

@@ -23,7 +23,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.signalcollect.triplerush.Dictionary
-import com.signalcollect.triplerush.FilterTriple
+import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.TriplePattern
 import com.signalcollect.triplerush.TripleRush
 import com.signalcollect.triplerush.util.ResultBindingsHashSet
@@ -41,7 +41,7 @@ case class Sparql(
   variableNameToId: Map[String, Int] = Map.empty[String, Int],
   idToVariableName: IndexedSeq[String] = Vector(),
   isDistinct: Boolean = false,
-  filters: List[Seq[FilterTriple]],
+  filters: List[Seq[Filter]],
   orderBy: Option[Int] = None,
   limit: Option[Int] = None) {
 
@@ -226,7 +226,7 @@ object Sparql {
         case ParsedPattern(StringLiteral(s), _, _, true) =>
           println("Now parsing " + s)
           val constraint = filterParser.parseAll(filterParser.constraint, s)
-          FilterTriple(constraint.get)
+          Filter(constraint.get)
       }
     }
 
