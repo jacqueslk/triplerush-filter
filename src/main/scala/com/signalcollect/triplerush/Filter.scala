@@ -144,15 +144,15 @@ case class GlobalNegative() extends Constraint {
 }
 
 
-object FilterTriple {
-  def globalFalse(): FilterTriple = {
-    FilterTriple(GlobalNegative())
+object Filter {
+  def globalFalse(): Filter = {
+    Filter(GlobalNegative())
   }
 }
 
 
-case class FilterTriple(constraint: Constraint) {
-  import FilterTriple.globalFalse
+case class Filter(constraint: Constraint) {
+  import Filter.globalFalse
   
   def isGlobalFalse: Boolean = constraint.isInstanceOf[GlobalNegative]
   def isArithmetic:  Boolean = constraint.isInstanceOf[ConditionalOrExpression]

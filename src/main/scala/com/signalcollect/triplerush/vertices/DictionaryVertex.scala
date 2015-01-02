@@ -2,7 +2,7 @@ package com.signalcollect.triplerush.vertices
 
 import scala.collection.mutable.HashMap
 import com.signalcollect.GraphEditor
-import com.signalcollect.triplerush.FilterTriple
+import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
 import com.signalcollect.triplerush.TrGlobal
@@ -31,7 +31,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   val d = TrGlobal.dictionary
   
-  val filterList = HashMap.empty[Int, Seq[FilterTriple]];
+  val filterList = HashMap.empty[Int, Seq[Filter]];
   
   // Unused methods that must be implemented because of IndexVertex
   override def addChildDelta(delta: Int): Boolean = false
@@ -46,7 +46,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   /**
    * Registers filter list for a given query ID for later processing
    */
-  override def registerFilters(queryId: Int, queryFilters: Seq[FilterTriple]) {
+  override def registerFilters(queryId: Int, queryFilters: Seq[Filter]) {
     println("DV::registerFilters: Registering " + queryFilters.length + s" filters for ID $queryId")
     filterList(queryId) = queryFilters
     summarizeNoVarFilters(queryId)
@@ -60,7 +60,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   def summarizeNoVarFilters(queryId: Int) {
     val noVarPassed = removeNoVarFilters(queryId)
     if (!noVarPassed) {
-      filterList(queryId) = FilterTriple.globalFalse +: filterList(queryId)
+      filterList(queryId) = Filter.globalFalse +: filterList(queryId)
     }
   }
   
@@ -70,7 +70,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * false once we found one variable, rather than using `getVariableSet()`,
    * which goes through the entire tree to find all variables.
    */
-  private def isNoVarFilter(filter: FilterTriple): Boolean = filter.getVariableSet.isEmpty
+  private def isNoVarFilter(filter: Filter): Boolean = filter.getVariableSet.isEmpty
   
   /**
    * Checks & removes filters with no variables (i.e. filters that
