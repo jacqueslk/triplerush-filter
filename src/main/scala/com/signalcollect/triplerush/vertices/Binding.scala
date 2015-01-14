@@ -128,10 +128,10 @@ trait Binding
     else {
       val destination = if(boundParticle.isResult) QueryIds.embedQueryIdInLong(boundParticle.queryId)
                                               else boundParticle.routingAddress
-      if (newBindings.length == 0) {
+      if (newBindings.length == 0 || !boundParticle.isBindingQuery) {
         graphEditor.sendSignal(boundParticle, destination)
       }
-      else if (boundParticle.isResult) {        
+      else if (boundParticle.isResult) {
         // Immediately send query to dictionary vertex if it is to be sent back to the query vertex;
         // we can avoid modifying the query vertices thanks to this
         import Array.concat
@@ -144,20 +144,6 @@ trait Binding
         graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
       }
     }
-
-// Old code
-//    if (boundParticle.isResult) {
-//      // Query successful, send to query vertex.
-//      val queryVertexId = QueryIds.embedQueryIdInLong(boundParticle.queryId)
-//      if (boundParticle.isBindingQuery) {
-//        graphEditor.sendSignal(boundParticle, queryVertexId)
-//      } else {
-//        graphEditor.sendSignal(1, queryVertexId)
-//        graphEditor.sendSignal(boundParticle.tickets, queryVertexId)
-//      }
-//    } else {
-//      graphEditor.sendSignal(boundParticle, boundParticle.routingAddress)
-//    }
   }
 
 }
