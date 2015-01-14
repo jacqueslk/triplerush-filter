@@ -7,7 +7,7 @@ import com.signalcollect.triplerush.sparql.Sparql
 /**
  * Temporary test case to fiddle around with.
  */
-class FilterBasicDebug extends FlatSpec with Checkers { 
+class FilterTempDebug extends FlatSpec with Checkers { 
   
   implicit val tr = new TripleRush
   
@@ -29,7 +29,7 @@ class FilterBasicDebug extends FlatSpec with Checkers {
         SELECT ?A ?T ?B
       	WHERE {
           <http://a> <http://p> ?A .
-          FILTER(?B >= 5)
+          FILTER(?B > (3*3))
           ?A ?T ?B
         }"""
       // FILTER(5/?B + ?B*3 - 3 > ?B || ?B*5 != 14)

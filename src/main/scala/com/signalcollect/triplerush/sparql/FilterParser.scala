@@ -46,8 +46,10 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
   }
   
   // [55] PrimaryExpression ::= BrackettedExpression | BuiltInCall | IRIrefOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
+  // [56] BrackettedExpression ::= '(' Expression ')'
+  // [46] Expression ::= ConditionalOrExpression
   val primaryExpression: Parser[PrimaryExpression] = {
-    variable | numericLiteral
+    variable | numericLiteral | ("(" ~> conditionalOrExpression <~ ")")
   }
   
   // [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
