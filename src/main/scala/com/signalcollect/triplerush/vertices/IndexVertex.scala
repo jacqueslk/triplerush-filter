@@ -40,8 +40,6 @@ import com.signalcollect.triplerush.EfficientIndexPattern
 abstract class IndexVertex[State](val id: Long)
   extends BaseVertex[State]
   with ParentBuilding[State] {
-  
-  val DICTIONARY_ID = Long.MaxValue
 
   override def expose: Map[String, Any] = {
     val indexType = getClass.getSimpleName
@@ -69,7 +67,7 @@ abstract class IndexVertex[State](val id: Long)
   def cardinality: Int
   
   // Used by the dictionary vertex to register filters for a query
-  def registerFilters(queryId: Int, filters: Seq[Filter]) = {}
+  def registerFilters(queryId: Int, filters: Seq[Filter], removal: Boolean) = {}
 
   /**
    * Default reply, is only overridden by SOIndex.
@@ -115,7 +113,7 @@ abstract class IndexVertex[State](val id: Long)
         graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
         println("FP " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
       case fr: FilterRegistration =>
-        registerFilters(fr.queryId, fr.filters)
+        registerFilters(fr.queryId, fr.filters, fr.removal)
       case cr: CardinalityRequest =>
 //        val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
 //        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip)

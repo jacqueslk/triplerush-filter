@@ -44,12 +44,16 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   }
   
   /**
-   * Registers filter list for a given query ID for later processing
+   * Registers & removes filter list for a given query ID
    */
-  override def registerFilters(queryId: Int, queryFilters: Seq[Filter]) {
-    println("DV::registerFilters: Registering " + queryFilters.length + s" filters for ID $queryId")
-    filterList(queryId) = queryFilters
-    summarizeNoVarFilters(queryId)
+  override def registerFilters(queryId: Int, queryFilters: Seq[Filter], removal: Boolean) {
+    if (removal) {
+      filterList -= queryId
+    }
+    else {
+      filterList(queryId) = queryFilters
+      summarizeNoVarFilters(queryId)
+    }
   }
   
   /**
@@ -100,13 +104,6 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   private def removeFilterFromList(queryId: Int, index: Int) {
     filterList(queryId) = filterList(queryId).take(index) ++ filterList(queryId).drop(index+1)
-  }
-  
-  /**
-   * Removes filter list of a given query ID
-   */
-  def removeFilters(queryId: Int) {
-    filterList -= queryId
   }
   
   /**

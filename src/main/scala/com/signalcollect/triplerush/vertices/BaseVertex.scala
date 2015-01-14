@@ -29,6 +29,7 @@ abstract class BaseVertex[State]
   extends Vertex[Long, State, Long, Any] {
 
   @transient var state: State = _
+  val DICTIONARY_ID = Long.MaxValue
 
   def setState(s: State) {
     state = s

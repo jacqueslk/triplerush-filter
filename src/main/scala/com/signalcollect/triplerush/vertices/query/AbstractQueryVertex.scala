@@ -190,7 +190,7 @@ abstract class AbstractQueryVertex[StateType](
       if (dispatchedQuery.isDefined) {
         graphEditor.sendSignal(
           FilterRegistration(dispatchedQuery.get.queryId, filters),
-          Long.MaxValue
+          DICTIONARY_ID
         )
         graphEditor.sendSignal(
           dispatchedQuery.get,
@@ -205,7 +205,10 @@ abstract class AbstractQueryVertex[StateType](
 
   def reportResultsAndRequestQueryVertexRemoval(graphEditor: GraphEditor[Long, Any]) {
     reportResults
-    // lucas
+    graphEditor.sendSignal(
+      FilterRegistration(dispatchedQuery.get.queryId, Seq(), true),
+      DICTIONARY_ID
+    )
     requestQueryVertexRemoval(graphEditor)
   }
 

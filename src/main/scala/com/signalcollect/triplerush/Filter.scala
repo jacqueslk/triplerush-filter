@@ -29,8 +29,10 @@ case class NumericLiteral(number: Double) extends PrimaryExpression {
 // String2 = !, +, - or empty, it is a prefix to the primary expression
 case class MultiplicativeExpression(entries: Seq[(String, String, PrimaryExpression)]) {
   def getVariableSet: Set[Int] = {
-    Set() ++ entries.collect {
-      case (s: String, t: String, v: Var) => v.index
+    Set() ++ entries.flatMap {
+      case (s: String, t: String, v: Var) => List(v.index)
+      case (s: String, t: String, e: ConditionalOrExpression) => e.getVariableSet
+      case _ => Nil
     }
   }
   def getValue(bindings: Map[Int, String]): Any = {
