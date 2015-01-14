@@ -94,7 +94,7 @@ case class AdditiveExpression(entries: Seq[(String, MultiplicativeExpression)]) 
     entries.foreach {
       multExpr =>
         val multExprVal = multExpr._2.getValue(bindings)
-        if (!multExprVal.isInstanceOf[Double]) return None
+        if (!multExprVal.isInstanceOf[Double]) return None // EBV.Error
         if (multExpr._1 == "-") {
           result -= multExprVal.asInstanceOf[Double]
         } else { // matches "+" as well as first empty entry
@@ -162,10 +162,16 @@ case class ConditionalAndExpression(entries: Seq[RelationalExpression]) {
       true
     }
   }
+  def getVariableSet: Set[Int] = {
+    Set() ++ entries.flatMap {
+      relExpr => relExpr.getVariableSet
+    }
+  }
 }
 
 sealed trait Constraint {
   def getValue(bindings: Map[Int, String]): Any
+  def getVariableSet: Set[Int]
 }
 case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint with PrimaryExpression {
   def getValue(bindings: Map[Int, String]): Any = {
@@ -180,10 +186,15 @@ case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) exten
       false
     }
   }
+  def getVariableSet: Set[Int] = {
+    Set() ++ entries.flatMap {
+      condAnd => condAnd.getVariableSet
+    }
+  }
 }
 case class GlobalNegative() extends Constraint {
-    def passes(bindings: Map[Int, String]): Boolean = false
     def getValue(bindings: Map[Int, String]): Boolean = false
+    def getVariableSet: Set[Int] = Set()
 }
 
 
@@ -211,23 +222,13 @@ case class Filter(constraint: Constraint) {
   import Filter.globalFalse
   
   def isGlobalFalse: Boolean = constraint.isInstanceOf[GlobalNegative]
-  def isArithmetic:  Boolean = constraint.isInstanceOf[ConditionalOrExpression]
   
   /**
    * Returns a set of all variables the filter requires
    * to be evaluated
    */
   def getVariableSet: Set[Int] = {
-    if (isArithmetic) {
-      val condOr = constraint.asInstanceOf[ConditionalOrExpression]
-      val result = Set() ++ condOr.entries.flatMap {
-        condAnd => condAnd.entries.flatMap {
-          relExpr => relExpr.getVariableSet
-        }
-      }
-      return result
-    }
-    Set()
+    constraint.getVariableSet
   }
   
   /**
