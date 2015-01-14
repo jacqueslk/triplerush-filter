@@ -20,7 +20,6 @@
 
 package com.signalcollect.triplerush.vertices
 
-import scala.collection.mutable.ListBuffer
 import com.signalcollect.Edge
 import com.signalcollect.GraphEditor
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
@@ -111,13 +110,9 @@ trait Binding
   }
   
   def findNewBindings(oldParticle: Array[Int], newParticle: Array[Int]): Seq[Int] = {
-    val newBindings = ListBuffer[Int]()
-    for (i <- 1 to oldParticle.numberOfBindings) {
-      if (oldParticle.getBinding(i) != newParticle.getBinding(i)) {
-        newBindings += i
-      }
-    }
-    newBindings
+    (1 to oldParticle.numberOfBindings) filter(i => (
+        oldParticle.getBinding(i) != newParticle.getBinding(i))
+    )
   }
 
   def routeSuccessfullyBound(
