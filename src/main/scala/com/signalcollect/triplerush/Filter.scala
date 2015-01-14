@@ -1,29 +1,14 @@
 package com.signalcollect.triplerush
 
 sealed trait PrimaryExpression {
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double]
   def getValue(bindings: Map[Int, String]): Any
 }
 case class BuiltInCall(name: String) extends PrimaryExpression {
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double] = {
-    throw new Exception("Built in call not yet supported")
-  }
   def getValue(bindings: Map[Int, String]): Any = {
-    throw new Exception("Built in call not yet supported")
+    throw new Exception("Built in calls are not yet supported")
   }
 }
 case class Var(index: Int) extends PrimaryExpression {
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double] = {
-    try {
-      // Only supports numbers (Double) right now...
-      val number = bindings.get(index).get.toDouble
-      return Some(number)
-    } catch {
-      case e: Exception => 
-        println("getRealValue: Encountered " + e.getClass.getSimpleName() + s" for $this with bindings $bindings")
-      return None
-    }
-  }
   def getValue(bindings: Map[Int, String]): Any = {
     try {
       // Only supports numbers (Double) right now...
@@ -31,13 +16,12 @@ case class Var(index: Int) extends PrimaryExpression {
       return number
     } catch {
       case e: Exception => 
-        println("getRealValue: Encountered " + e.getClass.getSimpleName() + s" for $this with bindings $bindings")
+        println("getRealValue: Encountered " + e.getClass.getSimpleName + s" for $this with bindings $bindings")
       return None
     }
   }
 }
-case class NumericLiteral(number: Int) extends PrimaryExpression {
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double] = Some(number)
+case class NumericLiteral(number: Double) extends PrimaryExpression {
   def getValue(bindings: Map[Int, String]): Double = number
 }
 
@@ -48,21 +32,6 @@ case class MultiplicativeExpression(entries: Seq[(String, String, PrimaryExpress
     Set() ++ entries.collect {
       case (s: String, t: String, v: Var) => v.index
     }
-  }
-  @deprecated def compute(bindings: Map[Int, String]): Option[Double] = {
-    val optionResult = entries(0)._3.getRealValue(bindings)
-    if (!optionResult.isDefined) return None
-    var result = optionResult.get
-    
-    for (i <- 1 until entries.length) {      
-      val entry = entries(i)
-      val realValue = entry._3.getRealValue(bindings)
-      if (!realValue.isDefined) return None
-      
-      if (entry._1 == "*") result *= realValue.get
-      else                 result /= realValue.get
-    }
-    Some(result)
   }
   def getValue(bindings: Map[Int, String]): Any = {
     val firstResult = applyPrimaryFlag(entries(0)._2, entries(0)._3.getValue(bindings))
@@ -112,20 +81,6 @@ case class AdditiveExpression(entries: Seq[(String, MultiplicativeExpression)]) 
       entry => entry._2.getVariableSet 
     }
   }
-  @deprecated def compute(bindings: Map[Int, String]): Option[Double] = {
-    var result = 0.0
-    entries.foreach {
-      multExpr =>
-        val multExprVal = multExpr._2.compute(bindings)
-        if (!multExprVal.isDefined) return None
-        if (multExpr._1 == "-") {
-          result -= multExprVal.get
-        } else { // matches "+" as well as first empty entry
-          result += multExprVal.get
-        }
-    }
-    Some(result)
-  }
   def getValue(bindings: Map[Int, String]): Any = {
     if (entries.length == 1) { // if only one entry, forward the value as it is
       entries(0)._2.getValue(bindings)
@@ -154,22 +109,6 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
     val lhsSet = lhs.getVariableSet
     val rhsSet = if(rhs.isDefined) rhs.get.getVariableSet else Set[Int]()
     (lhsSet ++ rhsSet)
-  }
-  @deprecated def passes(bindings: Map[Int, String]): Boolean = {
-    val lhsVal = lhs.compute(bindings)
-    if (!rhs.isDefined || !lhsVal.isDefined) {
-      // Return false if value is 0 or NaN
-      // http://www.w3.org/TR/xpath-functions/#func-boolean
-      // via http://www.w3.org/TR/rdf-sparql-query/#ebv
-      return (lhsVal.isDefined && lhsVal.get != 0) 
-    }
-    val rhsVal = rhs.get.compute(bindings)
-    if (!rhsVal.isDefined) return false
-    checkArithmeticOperator(lhsVal.get, rhsVal.get)
-  }
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double] = {
-    if (rhs.isDefined) return None
-    return lhs.compute(bindings)
   }
   def getValue(bindings: Map[Int, String]): Any = {
     if (rhs.isDefined) {
@@ -213,16 +152,6 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
   }
 }
 case class ConditionalAndExpression(entries: Seq[RelationalExpression]) {
-  @deprecated def passes(bindings: Map[Int, String]): Boolean = {
-    entries.foreach {
-      relExpr => if (!relExpr.passes(bindings)) return false
-    }
-    true
-  }
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double] = {
-    if (entries.size != 1) return None
-    return entries(0).getRealValue(bindings)
-  }
   def getValue(bindings: Map[Int, String]): Any = {
     if (entries.size == 1) {
      entries(0).getValue(bindings) 
@@ -236,28 +165,9 @@ case class ConditionalAndExpression(entries: Seq[RelationalExpression]) {
 }
 
 sealed trait Constraint {
-  @deprecated def passes(bindings: Map[Int, String]): Boolean
   def getValue(bindings: Map[Int, String]): Any
 }
 case class ConditionalOrExpression(entries: Seq[ConditionalAndExpression]) extends Constraint with PrimaryExpression {
-  @deprecated def passes(bindings: Map[Int, String]): Boolean = {
-    entries.foreach {
-      condAnd => if (condAnd.passes(bindings)) {
-        return true
-      }
-    }
-    false
-  }
-  /**
-   * This method is used to get the value in a bracketed expression, e.g.
-   * in the expression "5 * (?A + 3)"
-   * Usually, ConditionalOrExpression is a boolean but in certain arithmetic
-   * contexts we do need the real value from the RelationalExpression it holds.
-   */
-  @deprecated def getRealValue(bindings: Map[Int, String]): Option[Double] = {
-    if (entries.size != 1) return None
-    return entries(0).getRealValue(bindings)
-  }
   def getValue(bindings: Map[Int, String]): Any = {
     if (entries.size == 1) {
       entries(0).getValue(bindings)
@@ -287,11 +197,11 @@ object Filter {
    */
   def effectiveBooleanValue(value: Any): Boolean = {
     value match {
-      case bool: Boolean => bool
+      case bool: Boolean  => bool
       case string: String => (string.length > 0)
       case double: Double => (double != 0.0)
-      case int: Integer => (int != 0)
-      case any: Any => throw new Exception(s"[Filter::EBV] Unexpected value $any of type " + any.getClass.getSimpleName + " encountered!")
+      case int: Integer   => (int != 0)
+      case _ => throw new Exception(s"Unexpected value $value of type " + value.getClass.getSimpleName)
     }
   }
 }
