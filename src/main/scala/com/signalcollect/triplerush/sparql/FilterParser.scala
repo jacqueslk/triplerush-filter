@@ -18,7 +18,7 @@ import com.signalcollect.triplerush.ConditionalOrExpression
 //import com.signalcollect.triplerush.GlobalNegative
 
 case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers {
-  val identifier: Parser[String] = "[-a-zA-Z0-9]*".r
+  val identifier: Parser[String] = "[a-zA-Z0-9]*".r
   val integer: Parser[String] = "[0-9]+".r
   
   def getVariableId(name: String): Int = {

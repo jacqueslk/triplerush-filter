@@ -16,7 +16,7 @@ case class Var(index: Int) extends PrimaryExpression {
       return number
     } catch {
       case e: Exception => 
-        println("getRealValue: Encountered " + e.getClass.getSimpleName + s" for $this with bindings $bindings")
+        println("getValue: Encountered " + e.getClass.getSimpleName + s" for $this with bindings $bindings")
       return None
     }
   }
@@ -115,7 +115,7 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
       checkArithmeticOperator(lhs.getValue(bindings), rhs.get.getValue(bindings))
     }
     else {
-      
+      lhs.getValue(bindings)
     }
   }
   // http://www.w3.org/TR/rdf-sparql-query/#OperatorMapping

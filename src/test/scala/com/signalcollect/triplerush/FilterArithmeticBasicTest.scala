@@ -183,5 +183,36 @@ class FilterArithmeticBasicTest extends FlatSpec with Checkers {
       tr.shutdown
     }
   }
+  
+  it should "process filters with no relational expression" in {
+    implicit val tr = prepareTripleRush
+    try {
+      val queryString = """
+        SELECT ?A ?T ?B
+      	WHERE {
+          <http://a> <http://p> ?A
+          FILTER(?B-1)
+          ?A ?T ?B .
+        }"""
+      val query = Sparql(queryString).get
+      val result = query.resultIterator.toList
+      assert(result.length == 2)
+      result.foreach( e => assert(e("B").toInt > 1) )
+      
+      val queryString2 = """
+        SELECT ?A ?T ?B
+      	WHERE {
+          FILTER(-14--?B)
+          <http://a> <http://p> ?A .
+          ?A ?T ?B .
+        }"""
+      val query2 = Sparql(queryString2).get
+      val result2 = query2.resultIterator.toList
+      assert(result2.length == 2)
+      result2.foreach( e => assert(e("B").toInt != 14) )
+    } finally {
+      tr.shutdown
+    }
+  }
 
 }
