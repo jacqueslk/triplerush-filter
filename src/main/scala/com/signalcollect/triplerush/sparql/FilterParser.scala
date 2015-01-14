@@ -19,7 +19,12 @@ import com.signalcollect.triplerush.ConditionalOrExpression
 
 case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers {
   val identifier: Parser[String] = "[a-zA-Z0-9]*".r
-  val integer: Parser[String] = "[0-9]+".r
+  //val integer: Parser[String] = "-?[0-9]+".r
+  //val decimal: Parser[String] = "-?[0-9]*\\.[0-9]+"
+  
+  def integer: Parser[Int] = "\\-?[0-9]+".r ^^ (_.toInt)
+
+  def double: Parser[Double] = "\\-?[0-9]+\\.?[0-9]*((e|E)-?[0-9]+)?".r ^^ (_.toDouble)
   
   def getVariableId(name: String): Int = {
     val id = variableNameToId.get(name)
@@ -39,9 +44,11 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
   }
   
   val numericLiteral: Parser[NumericLiteral] = {
-    integer ^^ {
-      case number =>
-        NumericLiteral(number.toInt)
+    double ^^ {
+      //case int: Int =>
+      //  NumericLiteral(int)
+      case double: Double =>
+        NumericLiteral(double)
     }
   }
   

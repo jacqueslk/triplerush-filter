@@ -83,143 +83,96 @@ class FilterArithmeticMathTest extends FlatSpec with Checkers {
                  && e("C").toInt >= 20
       ))
       
-    } finally {
-      tr.shutdown
-    }
-  }
-  
-  it should "process the < filter" in {
-    implicit val tr = prepareTripleRush
-    try {
-      val queryString = """
-        SELECT ?A ?T ?B
+      // multiple elements in addition, negative modifier
+      val queryString4 = """
+        SELECT ?A ?B ?C
       	WHERE {
-          <http://a> <http://p> ?A .
-          ?A ?T ?B .
-          FILTER(?B < 14)
+          FILTER(-?B + -?B + ?C < 4+3-7+1)
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C
         }"""
-      val query = Sparql(queryString).get
-      val result = query.resultIterator.toList
-      assert(result.length == 1)
-      result.foreach( e => assert(e("B").toInt < 14) )
-    } finally {
-      tr.shutdown
-    }
-  }
-  
-  it should "process the != filter" in {
-    implicit val tr = prepareTripleRush
-    try {
-      val queryString = """
-        SELECT ?A ?T ?B
-      	WHERE {
-          <http://a> <http://p> ?A .
-          FILTER(?B != 1)
-          ?A ?T ?B .
-        }"""
-      val query = Sparql(queryString).get
-      val result = query.resultIterator.toList
-      assert(result.length == 2)
-      result.foreach( e => assert(e("B").toInt != 1) )
-    } finally {
-      tr.shutdown
-    }
-  }
-  
-  it should "process the = filter" in {
-    implicit val tr = prepareTripleRush
-    try {
-      val queryString = """
-        SELECT ?A ?T ?B
-      	WHERE {
-          <http://a> <http://p> ?A .
-          FILTER(?B = 123)
-          ?A ?T ?B
-        }"""
-      val query = Sparql(queryString).get
-      val result = query.resultIterator.toList
-      assert(result.length == 1)
-      result.foreach( e => assert(e("B").toInt == 123) )
-    } finally {
-      tr.shutdown
-    }
-  }
-  
-  it should "process the > filter" in {
-    implicit val tr = prepareTripleRush
-    try {
-      val queryString = """
-        SELECT ?A ?T ?B
-      	WHERE {
-          <http://a> <http://p> ?A
-          FILTER(?B > 14)
-          ?A ?T ?B
-        }"""
-      val query = Sparql(queryString).get
-      val result = query.resultIterator.toList
-      assert(result.length == 1)
-      result.foreach( e => assert(e("B").toInt > 14) )
-    } finally {
-      tr.shutdown
-    }
-  }
-  
-  it should "process the >= filter" in {
-    implicit val tr = prepareTripleRush
-    try {
-      val queryString = """
-        SELECT ?A ?T ?B
-      	WHERE {
-          FILTER(?B >= 125)
-          <http://a> <http://p> ?A .
-          ?A ?T ?B
-        }"""
-      val query = Sparql(queryString).get
-      val result = query.resultIterator.toList
-      assert(result.length == 0)
-      result.foreach( e => assert(e("B").toInt >= 125) )
-    } finally {
-      tr.shutdown
-    }
-  }
-  
-  it should "process filters with no variables" in {
-    implicit val tr = prepareTripleRush
-    try {
-      val impossibleQuery = """
-        SELECT ?A ?T ?B
-      	WHERE {
-          FILTER(1 > 5)
-          <http://a> <http://p> ?A .
-          ?A ?T ?B
-        }"""
-      val query1 = Sparql(impossibleQuery).get
-      val result1 = query1.resultIterator.toList
-      assert(result1.length == 0)
       
-      val possibleQuery = """
-        SELECT ?A ?T ?B
+      val query4 = Sparql(queryString4).get
+      val result4 = query4.resultIterator.toList
+      
+      assert(result4.length == 4)
+      result4.foreach( e => assert(0-e("B").toInt*2 + e("C").toInt < 1) )
+      
+    } finally {
+      tr.shutdown
+    }
+  }
+  
+  it should "process multiplication properly" in {
+    implicit val tr = prepareTripleRush
+    try {
+      // Simple multiplication
+      val queryString = """
+        SELECT ?A ?B ?C
       	WHERE {
-          FILTER(120 >= 120)
-          <http://a> <http://p> ?A .
-          ?A ?T ?B .
+          ?A <http://nr1> ?B .
+          FILTER(?B*2 > ?C)
+          ?A <http://nr2> ?C .
         }"""
-      val query2 = Sparql(possibleQuery).get
+      
+      val query = Sparql(queryString).get
+      val result = query.resultIterator.toList
+
+      assert(result.length == 3)
+      result.foreach( e => assert(e("B").toInt*2 > e("C").toInt) )
+      
+      // Division with OR operator
+      val queryString2 = """
+        SELECT ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C .
+          FILTER(?B/?C > 0.7 || 1000 / ?C*?B < -500)
+        }"""
+      
+      val query2 = Sparql(queryString2).get
       val result2 = query2.resultIterator.toList
-      assert(result2.length == 3)
       
-      val possibleCombinedQuery = """
-        SELECT ?A ?T ?B
+      assert(result2.length == 3)
+      result2.foreach( e => assert(
+             e("B").toDouble/e("C").toDouble > 0.7
+          || 1000/e("C").toDouble*e("B").toDouble < -500
+      ))
+      
+      // AND operator with division/multiplication
+      val queryString3 = """
+        SELECT ?B ?C
       	WHERE {
-          <http://a> <http://p> ?A
-          FILTER(130 != 140)
-          ?A ?T ?B
-          FILTER(?B <= 14)
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C
+          FILTER(?B*4/2*2 >= 100 && ?C*?B > 700/7/4/25 && ?B/10+?C/35 > 3)
         }"""
-      val query3 = Sparql(possibleCombinedQuery).get
+      
+      val query3 = Sparql(queryString3).get
       val result3 = query3.resultIterator.toList
+      
       assert(result3.length == 2)
-      result3.foreach( e => assert(e("B").toInt <= 14) )
+      result3.foreach( e => assert(
+             e("B") == "25" && e("C") == "31"
+          || e("B") == "36" && e("C") == "36"
+      ))
+      
+      // global filters testing precedence of operators
+      val queryString4 = """
+        SELECT ?A ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B .
+          FILTER(3*5 = 15 && 49/7 = 3+4)
+          FILTER(1+2-3*4/2 = -3)
+          FILTER(12/4*3-6+2 = 5 || 3*4 < 1)
+          ?A <http://nr2> ?C
+        }"""
+      
+      val query4 = Sparql(queryString4).get
+      val result4 = query4.resultIterator.toList
+      
+      assert(result4.length == 5)
+      
     } finally {
       tr.shutdown
     }
