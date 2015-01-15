@@ -69,7 +69,7 @@ case class Sparql(
   }
 
   def resultIterator: Iterator[String => String] = {
-    println(s"Sparql::resultIterator: filters=$filters")
+    //println(s"Sparql::resultIterator: filters=$filters")
     if (orderBy == None && limit == None) {
       new DecodingIterator(encodedResults)
     } else if (orderBy.isDefined && limit.isDefined) {
@@ -135,7 +135,7 @@ object Sparql {
   def apply(query: String)(implicit tr: TripleRush): Option[Sparql] = {
     val d = tr.dictionary
     val parsed: ParsedSparqlQuery = SparqlParser.parse(query)
-    println(parsed)
+    //println(parsed)
     var containsEntryThatIsNotInDictionary = false
     val prefixes = parsed.prefixes
     val select = parsed.select
@@ -224,7 +224,7 @@ object Sparql {
     val filterTriples = select.patternUnions.map {
       union => union.collect {
         case ParsedPattern(StringLiteral(s), _, _, true) =>
-          println("Now parsing " + s)
+         // println("Now parsing " + s)
           val constraint = filterParser.parseAll(filterParser.constraint, s)
           Filter(constraint.get)
       }

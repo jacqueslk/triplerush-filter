@@ -84,11 +84,11 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   private def removeNoVarFilters(queryId: Int): Boolean = {
     var i = 0
     filterList(queryId).foreach { filter =>
-      println(s"Checking filter #$i for no vars...")
+      //println(s"Checking filter #$i for no vars...")
       if (isNoVarFilter(filter)) {
-        println("Has no variables")
+        //println("Has no variables")
         if (!filter.passes(Map())) {
-          println(s"Filter #$i did not pass!")
+          //println(s"Filter #$i did not pass!")
           return false
         }
         removeFilterFromList(queryId, i)
@@ -119,12 +119,12 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     for (i <- 0 until filterList(query.queryId).length) {
       val filter = filterList(query.queryId)(i)
       val variableSet = filter.getVariableSet
-      println(s"Checking filter #$i")
+      //println(s"Checking filter #$i")
       if (isRelevantFilter(query, newBindings, variableSet)) {
-        println(s" Filter #$i is relevant")
+        //println(s" Filter #$i is relevant")
         bindingValues = addToBindingValues(bindingValues, query, variableSet)
         if (!filter.passes(bindingValues)) {
-          println(s"  Filter #$i did not pass!")
+          //println(s"  Filter #$i did not pass!")
           return false
         }
       }
@@ -187,7 +187,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    *   + [destination as long in two int fields]
    */
   def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    println(s"DictionaryVertex::checkAndForward query=" + query.mkString(" "))
+    //println(s"DictionaryVertex::checkAndForward query=" + query.mkString(" "))
     
     val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
     val numberOfNewBindings = query(query.length-3)
@@ -198,13 +198,13 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
       graphEditor.sendSignal(filterResponse, destination)
       
       val eip = new EfficientIndexPattern(destination).toTriplePattern
-      println("... Passed filters; sending to " + eip)
+      //println("... Passed filters; sending to " + eip)
     }
     else {      
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
       
-      println("... Did not pass filters")
+      //println("... Did not pass filters")
     }
   }
   

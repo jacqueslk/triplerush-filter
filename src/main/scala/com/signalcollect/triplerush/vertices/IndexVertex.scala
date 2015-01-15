@@ -73,7 +73,7 @@ abstract class IndexVertex[State](val id: Long)
    * Default reply, is only overridden by SOIndex.
    */
   def handleCardinalityRequest(c: CardinalityRequest, graphEditor: GraphEditor[Long, Any]) {
-    println(s"handleCardinalityRequest: answer is $cardinality")
+    //println(s"handleCardinalityRequest: answer is $cardinality")
     graphEditor.sendSignal(CardinalityReply(
       c.forPattern, cardinality), c.requestor)
   }
@@ -104,14 +104,14 @@ abstract class IndexVertex[State](val id: Long)
     
     signal match {
       case query: Array[Int] =>
-        println("Got query " + query.mkString(" "))
+        //println("Got query " + query.mkString(" "))
         processQuery(query, graphEditor)
       case fp: FilterPending =>
         import Array.concat
         val idInfo = new EfficientIndexPattern(id) 
         val queryWithMetaInfo = concat(fp.query, fp.newBindings) :+ fp.newBindings.length :+ idInfo.extractFirst :+ idInfo.extractSecond
         graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
-        println("FP " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
+        //println("FP " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
       case fr: FilterRegistration =>
         registerFilters(fr.queryId, fr.filters, fr.removal)
       case cr: CardinalityRequest =>
