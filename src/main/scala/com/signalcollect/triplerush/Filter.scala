@@ -58,13 +58,12 @@ case class MultiplicativeExpression(entries: Seq[(String, String, PrimaryExpress
   private def applyPrimaryFlag(prefix: String, expressionValue: Any): Any = {
     if (prefix == "") {
       expressionValue
-    } else if (prefix == "!") {
-      expressionValue match {
-        case bool: Boolean => return !bool
-        case _ => println(s"MultiplicativeExpression: ! operator not applicable to primary expression $expressionValue")
-      }
-      return None
-    } else if (prefix == "+" || prefix == "-") {
+    }
+    else if (prefix == "!") {
+      if (expressionValue == None) return None
+      else  return !(Filter.effectiveBooleanValue(expressionValue))
+    }
+    else if (prefix == "+" || prefix == "-") {
       val multiplier = if (prefix == "-") -1 else 1
       expressionValue match {
         case double: Double => return multiplier * double
@@ -72,7 +71,8 @@ case class MultiplicativeExpression(entries: Seq[(String, String, PrimaryExpress
         case _ => println(s"MultiplicativeExpression: + or - cannot be used for primary expression $expressionValue")
       }
       return None
-    } else {
+    }
+    else {
       throw new Exception(s"Unknown prefix $prefix for $expressionValue")
     }
   }
@@ -214,6 +214,7 @@ object Filter {
       case string: String => (string.length > 0)
       case double: Double => (double != 0.0)
       case int: Integer   => (int != 0)
+      case none: Option[Any] => false // EBV.Error gets converted to false?
       case _ => throw new Exception(s"Unexpected value $value of type " + value.getClass.getSimpleName)
     }
   }
