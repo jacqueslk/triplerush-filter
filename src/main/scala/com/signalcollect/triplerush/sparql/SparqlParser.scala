@@ -118,11 +118,11 @@ object SparqlParser extends ParseHelper[ParsedSparqlQuery] with ImplicitConversi
   }
   
   val filterSpec: Parser[ParsedPattern] = {    
-    "FILTER(" ~> rep1("[\\!-'\\*-~]+".r) <~ ")"  ^^ {
-    //"FILTER" ~> filterBody  ^^ {
+    //"FILTER(" ~> rep1("[\\!-'\\*-~]+".r) <~ ")"  ^^ {
+    "FILTER" ~> filterBody  ^^ {
       case filterBody =>
-        ParsedPattern(StringLiteral(filterBody.mkString(" ")), StringLiteral(""), StringLiteral(""), true) 
-        //ParsedPattern(StringLiteral(filterBody), StringLiteral(""), StringLiteral(""), true)
+        //ParsedPattern(StringLiteral(filterBody.mkString(" ")), StringLiteral(""), StringLiteral(""), true) 
+        ParsedPattern(StringLiteral(filterBody), StringLiteral(""), StringLiteral(""), true)
     }
   }
   

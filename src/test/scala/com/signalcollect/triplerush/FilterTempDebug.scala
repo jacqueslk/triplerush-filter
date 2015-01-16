@@ -29,7 +29,7 @@ class FilterTempDebug extends FlatSpec with Checkers {
         SELECT ?A ?T ?B
       	WHERE {
           <http://a> <http://p> ?A .
-          FILTER(?B > (3*3))
+          FILTER((3+6)*(4+5) = (81/9)*(54-45))
           ?A ?T ?B
         }"""
       // FILTER(5/?B + ?B*3 - 3 > ?B || ?B*5 != 14)
