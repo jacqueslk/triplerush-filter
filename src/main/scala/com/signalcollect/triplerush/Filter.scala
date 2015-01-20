@@ -122,8 +122,8 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
   }
   // http://www.w3.org/TR/rdf-sparql-query/#OperatorMapping
   private def checkArithmeticOperator(lhsValue: Any, rhsValue: Any): Boolean = {
-    if (lhsValue.getClass != rhsValue.getClass) {
-      println(s"Error for constraint $lhsValue $operator $rhsValue: Not same type")
+    if (lhsValue.getClass != rhsValue.getClass || lhsValue == None) {
+      println(s"Error for constraint $lhsValue $operator $rhsValue: Not same type or None")
       return false // EBV.Error
     }
     operator match {
@@ -149,7 +149,7 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
       case (lhsB: Boolean, rhsB: Boolean) => (lhsB && !rhsB)
       case (lhsD: Double, rhsD: Double)   => (lhsD > rhsD)
       case (lhsS: String, rhsS: String)   => (lhsS.compareTo(rhsS) > 0)
-      case _ => throw new Exception(s"Unknown type combination for lhs=$lhs and rhs=$rhs!")
+      case _ => throw new Exception(s"Unknown type combination for lhs=" + lhs.getClass +" and rhs=$rhs!")
     }
   }
 }
@@ -214,7 +214,7 @@ object Filter {
       case string: String => (string.length > 0)
       case double: Double => (double != 0.0)
       case int: Integer   => (int != 0)
-      case none: Option[Any] => false // EBV.Error gets converted to false?
+      case None => false // EBV.Error gets converted to false?
       case _ => throw new Exception(s"Unexpected value $value of type " + value.getClass.getSimpleName)
     }
   }
