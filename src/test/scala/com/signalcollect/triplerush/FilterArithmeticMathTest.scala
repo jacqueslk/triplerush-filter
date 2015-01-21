@@ -177,5 +177,76 @@ class FilterArithmeticMathTest extends FlatSpec with Checkers {
       tr.shutdown
     }
   }
+  
+  it should "handle bracketed expressions" in {
+    implicit val tr = prepareTripleRush
+    try {
+      // Simple bracket expression
+      val queryString = """
+        SELECT ?A ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C
+          FILTER((?B+?C)/10 <= 5)
+        }"""
+      
+      val query = Sparql(queryString).get
+      val result = query.resultIterator.toList
+
+      assert(result.length == 2)
+      result.foreach( e => assert((e("B").toInt + e("C").toInt)/10 <= 5) )
+      
+      // Boolean expression in brackets
+      val queryString2 = """
+        SELECT ?B ?C
+      	WHERE {
+          ?A <http://nr2> ?C
+          FILTER((?B < 30))
+          ?A <http://nr1> ?B
+        }"""
+      
+      val query2 = Sparql(queryString2).get
+      val result2 = query2.resultIterator.toList
+      
+      assert(result2.length == 3)
+      result2.foreach( e => assert(e("B").toInt < 30) )
+      
+      // Mix of arithmetic and boolean brackets
+      val queryString3 = """
+        SELECT ?B ?C
+      	WHERE {
+          FILTER((?B-10)/2 > 0 && (?C = 31 || ?C < 0))
+          ?A <http://nr1> ?B .
+          ?A <http://nr2> ?C
+        }"""
+      
+      val query3 = Sparql(queryString3).get
+      val result3 = query3.resultIterator.toList
+      
+      assert(result3.length == 2)
+      result3.foreach( e => assert(
+             e("B") == "25" && e("C") == "31"
+          || e("B") == "49" && e("C") == "-5"
+      ))
+      
+      // global filter w/ brackets
+      val queryString4 = """
+        SELECT ?A ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B .
+          FILTER(?B = ?B && (5 = 0 || (?C != 8974 && -3 < 3/5)))
+          FILTER((5+3)*4 = 32 && (?B != -2321 && (1*2)*(48/4) = 2*(3*4)))
+          ?A <http://nr2> ?C
+        }"""
+      
+      val query4 = Sparql(queryString4).get
+      val result4 = query4.resultIterator.toList
+      
+      assert(result4.length == 5)
+      
+    } finally {
+      tr.shutdown
+    }
+  }
 
 }

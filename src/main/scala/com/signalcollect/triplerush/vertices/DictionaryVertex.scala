@@ -222,13 +222,14 @@ final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
    */
   def varToValue(query: Array[Int], index: Int): Option[String] = {
     val varValue = query.getBinding(index)
+    //println(s"varToValue for $varValue")
     if (varValue > 0) {
       try {
-        Some(d(varValue))
+        d.decode(varValue)
       } catch {
-        case e: IndexOutOfBoundsException => 
-          println("Couldn't get " + varValue + " from dict")
-          return None
+        case e: IndexOutOfBoundsException =>
+          println("No " + varValue + " in dict")
+          None
       }
     }
     else None

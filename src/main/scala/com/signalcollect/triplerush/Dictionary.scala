@@ -32,7 +32,7 @@ trait Dictionary {
   def contains(s: String): Boolean
   def apply(s: String): Int
   def apply(id: Int): String
-  // Can only be called, when there are no concurrent writes.
+  // Can only be called when there are no concurrent writes.
   def unsafeDecode(id: Int): String
   def unsafeGetEncoded(s: String): Int
   def decode(id: Int): Option[String]
@@ -90,7 +90,6 @@ class HashMapDictionary(
   }
   
   def apply(s: String): Int = {
-    //println("Size d=" + id2String.length)
     read.lock
     val existingEncoding: Int = try {
       string2Id.get(s)
