@@ -149,7 +149,7 @@ case class RelationalExpression(lhs: AdditiveExpression, operator: String, rhs: 
       case (lhsB: Boolean, rhsB: Boolean) => (lhsB && !rhsB)
       case (lhsD: Double, rhsD: Double)   => (lhsD > rhsD)
       case (lhsS: String, rhsS: String)   => (lhsS.compareTo(rhsS) > 0)
-      case _ => throw new Exception(s"Unknown type combination for lhs=" + lhs.getClass +" and rhs=$rhs!")
+      case _ => throw new Exception(s"Unknown type combination for lhs=$lhs and rhs=$rhs!")
     }
   }
 }

@@ -42,6 +42,7 @@ case class Sparql(
   idToVariableName: IndexedSeq[String] = Vector(),
   isDistinct: Boolean = false,
   filters: List[Seq[Filter]],
+  filterVariables: List[Set[Int]], // variables in filter that are not in SELECT
   orderBy: Option[Int] = None,
   limit: Option[Int] = None) {
 
@@ -145,6 +146,7 @@ object Sparql {
     var nextVariableId = -1
     var variableNameToId = Map.empty[String, Int]
     var idToVariableName = Vector.empty[String]
+    var filterVariables = List.empty[Set[Int]]
     for (varName <- selectVariableNames) {
       val id = encodeVariable(varName)
       selectVariableIds += id
@@ -222,11 +224,16 @@ object Sparql {
     val encodedPatternUnions = select.patternUnions.map(dictionaryEncodePatterns)
     val filterParser = FilterParser(variableNameToId)
     val filterTriples = select.patternUnions.map {
-      union => union.collect {
-        case ParsedPattern(StringLiteral(s), _, _, true) =>
-         // println("Now parsing " + s)
-          val constraint = filterParser.parseAll(filterParser.constraint, s)
-          Filter(constraint.get)
+      union => {
+        var filterVariablesInUnion = Set.empty[Int] 
+        val collectResult = union.collect {
+          case ParsedPattern(StringLiteral(s), _, _, true) =>
+            val filter = Filter(filterParser.parseAll(filterParser.constraint, s).get)
+            filterVariablesInUnion = filterVariablesInUnion ++ filter.getVariableSet
+            filter
+        }
+        filterVariables = filterVariables :+ (filterVariablesInUnion -- selectVariableIds)
+        collectResult
       }
     }
 
@@ -243,6 +250,7 @@ object Sparql {
           isDistinct = parsed.select.isDistinct,
           orderBy = select.orderBy.map(variableNameToId),
           filters = filterTriples,
+          filterVariables = filterVariables,
           limit = select.limit))
     }
   }

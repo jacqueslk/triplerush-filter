@@ -24,15 +24,17 @@ class FilterTempDebug extends FlatSpec with Checkers {
       tr.prepareExecution
       println("END PREPARE EXECUTION\r================================\r\r\r\r")
       
-      val variables = List("A", "T", "B")
+      val variables = List("simProperty2", "T", "origProperty2")
       val queryString = """
-        SELECT ?A ?T ?B
+        SELECT ?simProperty2 ?T ?origProperty2
       	WHERE {
-          <http://a> <http://p> ?A .
+          <http://a> <http://p> ?simProperty2 .
+          ?simProperty2 ?T ?origProperty2
+
           FILTER((3+6)*(4+5) = (81/9)*(54-45))
-          FILTER((?A = ?A || 0 > 10) && !(0))
-          ?A ?T ?B
+          FILTER((?origProperty2 = ?origProperty2 || 0 > 10) && !(0))
         }"""
+      // Unsupported: FILTER (<http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromProducer1/Product35> != ?origProperty2)
       // FILTER(5/?B + ?B*3 - 3 > ?B || ?B*5 != 14)
         // FILTER(5*5 != 14 && 3 > 1)
       
