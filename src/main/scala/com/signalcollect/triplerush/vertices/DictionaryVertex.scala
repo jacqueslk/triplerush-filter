@@ -2,9 +2,10 @@ package com.signalcollect.triplerush.vertices
 
 import scala.collection.mutable.HashMap
 import com.signalcollect.GraphEditor
-import com.signalcollect.triplerush.Filter
+import com.signalcollect.triplerush.Dictionary
 import com.signalcollect.triplerush.EfficientIndexPattern
 import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
+import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.TrGlobal
 import com.signalcollect.triplerush.TriplePattern
 import com.signalcollect.triplerush.QueryIds
@@ -27,9 +28,9 @@ import com.signalcollect.triplerush.Constraint
 import com.signalcollect.triplerush.ConditionalOrExpression
 import com.signalcollect.triplerush.GlobalNegative
 
-final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
+final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
   
-  val d = TrGlobal.dictionary
+  //val d = TrGlobal.dictionary
   
   val filterList = HashMap.empty[Int, Seq[Filter]];
   
@@ -148,7 +149,7 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     val newMap = scala.collection.mutable.Map[Int, String]()
     required.foreach {
       variable => if (!existingMap.get(variable).isDefined) {
-        newMap(variable) = varToValue(query, variable).get
+        newMap(variable) = varToValue(query, variable).getOrElse("")
       }
     }
     existingMap ++ newMap.toMap
@@ -221,8 +222,15 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    */
   def varToValue(query: Array[Int], index: Int): Option[String] = {
     val varValue = query.getBinding(index)
-    if (varValue > 0) 
-     Some(d.get(varValue))
+    if (varValue > 0) {
+      try {
+        Some(d(varValue))
+      } catch {
+        case e: IndexOutOfBoundsException => 
+          println("Couldn't get " + varValue + " from dict")
+          return None
+      }
+    }
     else None
   }
   

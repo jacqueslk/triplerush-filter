@@ -90,6 +90,7 @@ class HashMapDictionary(
   }
   
   def apply(s: String): Int = {
+    //println("Size d=" + id2String.length)
     read.lock
     val existingEncoding: Int = try {
       string2Id.get(s)

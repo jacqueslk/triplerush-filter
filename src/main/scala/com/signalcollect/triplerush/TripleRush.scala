@@ -131,7 +131,7 @@ case class TripleRush(
   val system = ActorSystemRegistry.retrieve("SignalCollect").get
   implicit val executionContext = system.dispatcher
   graph.addVertex(new RootIndex)
-  graph.addVertex(new DictionaryVertex)
+  graph.addVertex(new DictionaryVertex(dictionary))
   
   var optimizer: Option[Optimizer] = None
 
@@ -273,7 +273,7 @@ case class TripleRush(
     graph.reset
     graph.awaitIdle
     graph.addVertex(new RootIndex)
-    graph.addVertex(new DictionaryVertex)
+    graph.addVertex(new DictionaryVertex(dictionary))
   }
 
   def clearCaches {
