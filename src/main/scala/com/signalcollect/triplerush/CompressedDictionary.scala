@@ -68,6 +68,7 @@ class CompressedDictionary extends Dictionary {
   }
 
   def apply(s: String): Int = {
+    //if (idToPrefixedId.size % 1000 == 0) println("apply: s=" + idToPrefixedId.size + s"; this=$this")
     val splitIndex = getSplitIndex(s)
     if (splitIndex > 0 && splitIndex < (s.length - 1)) {
       val prefix = s.substring(0, splitIndex + 1)
@@ -146,6 +147,7 @@ class CompressedDictionary extends Dictionary {
   }
 
   def decode(id: Int): Option[String] = {
+    //println("decode: s=" + idToPrefixedId.size + s"; this=$this")
     read.lock
     try {
       val prefixedId = idToPrefixedId.get(id)

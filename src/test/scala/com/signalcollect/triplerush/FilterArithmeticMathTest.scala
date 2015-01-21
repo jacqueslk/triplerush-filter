@@ -229,20 +229,37 @@ class FilterArithmeticMathTest extends FlatSpec with Checkers {
           || e("B") == "49" && e("C") == "-5"
       ))
       
-      // global filter w/ brackets
+      // bracketted expressions; arithmetic to bool conversion
       val queryString4 = """
         SELECT ?A ?B ?C
       	WHERE {
-          ?A <http://nr1> ?B .
-          FILTER(?B = ?B && (5 = 0 || (?C != 8974 && -3 < 3/5)))
-          FILTER((5+3)*4 = 32 && (?B != -2321 && (1*2)*(48/4) = 2*(3*4)))
+          ?A <http://nr1> ?B
+          FILTER(4*(7-3) && (12-(4*4)))
+          FILTER(((((1)))))
           ?A <http://nr2> ?C
+          FILTER((?B*2-?C)*(?B-?C))
         }"""
       
       val query4 = Sparql(queryString4).get
       val result4 = query4.resultIterator.toList
       
-      assert(result4.length == 5)
+      assert(result4.length == 3)
+      result4.foreach( e => assert(e("B") != "9" && e("B") != "36") )
+      
+      // global filter w/ brackets
+      val queryString5 = """
+        SELECT ?A ?B ?C
+      	WHERE {
+          ?A <http://nr1> ?B .
+          FILTER(?B = ?B && (5 = 0 || (?C != 8974 && -3 < 3/5)))
+          FILTER((5+3)*4 = 32 && (?B != -2321 && (1+1)*(48/4) = 2*(3*4)))
+          ?A <http://nr2> ?C
+        }"""
+      
+      val query5 = Sparql(queryString5).get
+      val result5 = query5.resultIterator.toList
+      
+      assert(result5.length == 5)
       
     } finally {
       tr.shutdown
