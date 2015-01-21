@@ -117,12 +117,15 @@ case class Sparql(
     val iterators = encodedPatternUnions.map {
       patterns =>
         cnt += 1
-        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables), filters.get(cnt))
+        // Filters may use variables that are not in SELECT statement
+        // As a quick fix, we use the smallest negative number present in
+        // filterVariables as our new number of bindings ... Of course,
+        // with things like selectVariables = {-1, -2} and filterVariables = {-5},
+        // this also adds binding space for variables -3 and -4, which we don't need
+        val numberOfBindings = if (filterVariables.get(cnt).size == 0) numberOfSelectVariables
+                               else 0-filterVariables.get(cnt).min
+        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfBindings), filters.get(cnt))
     }
-//    val iterators: Iterator[Array[Int]] = encodedPatternUnions.zipWithIndex.foreach {
-//      case (patterns, index) =>
-//        tr.resultIteratorForQuery(patterns, optimizer, Some(numberOfSelectVariables))
-//    }
     iterators.reduce(_ ++ _)
   }
 

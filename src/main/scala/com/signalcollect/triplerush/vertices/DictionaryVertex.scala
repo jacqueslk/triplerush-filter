@@ -111,11 +111,16 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
    * bound variables
    */
   def checkAllFilters(query: Array[Int], newBindings: Array[Int]): Boolean = {
-    if (!filterList.contains(query.queryId)) return true
+    if (!filterList.contains(query.queryId)) {
+      //println("checkALlFilters: Could not find query ID " + query.queryId + " for " + query.mkString(" "))
+      return true
+    } 
     if (filterList(query.queryId).length > 0 && filterList(query.queryId)(0).isGlobalFalse) {
+      //println("isGlobalFalse > sending false")
       return false
     }
     var bindingValues = Map[Int, String]()
+    //println(s"DV::Checking $query with $bindingValues")
     for (i <- 0 until filterList(query.queryId).length) {
       val filter = filterList(query.queryId)(i)
       val variableSet = filter.getVariableSet

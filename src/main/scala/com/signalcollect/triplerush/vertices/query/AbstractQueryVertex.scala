@@ -75,6 +75,7 @@ abstract class AbstractQueryVertex[StateType](
           numberOfSelectVariables = numberOfSelectVariables,
           tickets = tickets)
         dispatchedQuery = Some(particle)
+        graphEditor.sendSignal(FilterRegistration(particle.queryId, filters), DICTIONARY_ID)
         graphEditor.sendSignal(particle, particle.routingAddress)
       } else {
         dispatchedQuery = None

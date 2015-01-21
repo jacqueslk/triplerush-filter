@@ -40,7 +40,7 @@ class FilterProblems extends FlatSpec with Checkers {
       
       val variables = List("country")
       val queryString = """
-   SELECT ?country 
+   SELECT ?country
    WHERE {
       ?country <http://example.org/population> ?pop .
       FILTER(?pop > 10000000)

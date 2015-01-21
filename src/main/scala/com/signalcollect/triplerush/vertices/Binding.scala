@@ -110,7 +110,7 @@ trait Binding
   }
   
   def findNewBindings(oldParticle: Array[Int], newParticle: Array[Int]): Seq[Int] = {
-    (1 to oldParticle.numberOfBindings) filter(i => (
+    (-1 to -oldParticle.numberOfBindings by -1) filter(i => (
         oldParticle.getBinding(i) != newParticle.getBinding(i))
     )
   }

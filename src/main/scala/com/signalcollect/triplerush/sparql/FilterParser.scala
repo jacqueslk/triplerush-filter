@@ -31,7 +31,7 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
     if (!id.isDefined) {
       throw new Exception(s"Unknown variable ?$name in filter!")
     }
-    0-id.get // positive ID
+    id.get
   } 
   
   
