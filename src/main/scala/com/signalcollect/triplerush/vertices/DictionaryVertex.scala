@@ -28,11 +28,9 @@ import com.signalcollect.triplerush.Constraint
 import com.signalcollect.triplerush.ConditionalOrExpression
 import com.signalcollect.triplerush.GlobalNegative
 
-final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
+final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
   
   val filterList = HashMap.empty[Int, Seq[Filter]];
-  
-  println(s"DictionaryVertex: Got d=$d")
   
   // Unused methods that must be implemented because of IndexVertex
   override def addChildDelta(delta: Int): Boolean = false
@@ -225,10 +223,10 @@ final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
     //println(s"varToValue for $varValue")
     if (varValue > 0) {
       try {
-        d.decode(varValue)
+        TrGlobal.dictionary.get.decode(varValue)
       } catch {
         case e: IndexOutOfBoundsException =>
-          println("No " + varValue + s" in dict $d")
+          println("No " + varValue + s" in dict")
           None
       }
     }

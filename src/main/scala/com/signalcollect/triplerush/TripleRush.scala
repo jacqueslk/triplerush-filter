@@ -107,6 +107,7 @@ case class TripleRush(
         "com.signalcollect.triplerush.PredicateStatsReply",
         "com.signalcollect.triplerush.ChildIdRequest",
         "com.signalcollect.triplerush.ChildIdReply",
+        "com.signalcollect.triplerush.CompressedDictionary",
         "com.signalcollect.triplerush.SubjectCountSignal",
         "com.signalcollect.triplerush.ObjectCountSignal",
         "Array[com.signalcollect.triplerush.TriplePattern]",
@@ -133,7 +134,7 @@ case class TripleRush(
   val system = ActorSystemRegistry.retrieve("SignalCollect").get
   implicit val executionContext = system.dispatcher
   graph.addVertex(new RootIndex)
-  graph.loadGraph(new DictionaryVertexAdder(dictionary), Some(0))
+  graph.loadGraph(new DictionaryVertexAdder, Some(1))
   
   var optimizer: Option[Optimizer] = None
 
@@ -275,7 +276,7 @@ case class TripleRush(
     graph.reset
     graph.awaitIdle
     graph.addVertex(new RootIndex)
-    graph.loadGraph(new DictionaryVertexAdder(dictionary), Some(0))
+    graph.loadGraph(new DictionaryVertexAdder, Some(1))
   }
 
   def clearCaches {
@@ -302,21 +303,23 @@ case class TripleRush(
   def countVerticesByType: Map[String, Int] = {
     graph.aggregate(new CountVerticesByType)
   }
+  
+  case class DictionaryVertexAdder() extends Iterator[GraphEditor[Long, Any] => Unit] {
+    var index = 0
+    
+    def hasNext: Boolean = (index == 0)
+    
+    def next: GraphEditor[Long, Any] => Unit = {
+      assert(index == 0, "Next was called when hasNext is false.")
+      index += 1
+      addDictVert(_)
+    }
+    
+    def addDictVert(graphEditor: GraphEditor[Long, Any]) {
+      graphEditor.addVertex(new DictionaryVertex)
+    }
+  }
 
 }
 
-case class DictionaryVertexAdder(dictionary: Dictionary) extends Iterator[GraphEditor[Long, Any] => Unit] {
-  var index = 0
-  
-  def hasNext: Boolean = (index == 0)
-  
-  def next: GraphEditor[Long, Any] => Unit = {
-    assert(index == 0, "Next was called when hasNext is false.")
-    index += 1
-    addDictVert(dictionary, _)
-  }
-  
-  def addDictVert(dictionary: Dictionary, graphEditor: GraphEditor[Long, Any]) {
-    graphEditor.addVertex(new DictionaryVertex(dictionary))
-  }
-}
+
