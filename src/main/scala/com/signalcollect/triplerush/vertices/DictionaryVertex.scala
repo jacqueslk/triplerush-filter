@@ -30,9 +30,9 @@ import com.signalcollect.triplerush.GlobalNegative
 
 final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
   
-  //val d = TrGlobal.dictionary
-  
   val filterList = HashMap.empty[Int, Seq[Filter]];
+  
+  println(s"DictionaryVertex: Got d=$d")
   
   // Unused methods that must be implemented because of IndexVertex
   override def addChildDelta(delta: Int): Boolean = false
@@ -228,7 +228,7 @@ final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
         d.decode(varValue)
       } catch {
         case e: IndexOutOfBoundsException =>
-          println("No " + varValue + " in dict")
+          println("No " + varValue + s" in dict $d")
           None
       }
     }

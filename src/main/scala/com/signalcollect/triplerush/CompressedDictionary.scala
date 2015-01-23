@@ -25,6 +25,8 @@ import com.signalcollect.triplerush.util.CompositeLongIntHashMap
 import com.signalcollect.util.IntLongHashMap
 
 class CompressedDictionary extends Dictionary {
+  
+  println(s"Created CompressedDictionary $this")
 
   val idToPrefixedId = new IntLongHashMap(initialSize = 128, rehashFraction = 0.4f)
   val prefixedIdToId = new CompositeLongIntHashMap(initialSize = 128, rehashFraction = 0.4f)

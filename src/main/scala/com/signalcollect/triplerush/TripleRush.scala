@@ -26,6 +26,7 @@ import scala.concurrent.Promise
 import scala.concurrent.duration.DurationInt
 import com.signalcollect.ExecutionConfiguration
 import com.signalcollect.GraphBuilder
+import com.signalcollect.GraphEditor
 import com.signalcollect.configuration.ActorSystemRegistry
 import com.signalcollect.configuration.ExecutionMode
 import com.signalcollect.triplerush.loading.BinarySplitLoader
@@ -69,6 +70,7 @@ case class TripleRush(
   console: Boolean = false) extends QueryEngine {
 
   TrGlobal.dictionary = Some(dictionary)
+  println(s"TripleRush: d=$dictionary")
 
   var canExecute = false
 
@@ -131,7 +133,7 @@ case class TripleRush(
   val system = ActorSystemRegistry.retrieve("SignalCollect").get
   implicit val executionContext = system.dispatcher
   graph.addVertex(new RootIndex)
-  graph.addVertex(new DictionaryVertex(dictionary))
+  graph.loadGraph(new DictionaryVertexAdder(dictionary), Some(0))
   
   var optimizer: Option[Optimizer] = None
 
@@ -273,7 +275,7 @@ case class TripleRush(
     graph.reset
     graph.awaitIdle
     graph.addVertex(new RootIndex)
-    graph.addVertex(new DictionaryVertex(dictionary))
+    graph.loadGraph(new DictionaryVertexAdder(dictionary), Some(0))
   }
 
   def clearCaches {
@@ -301,4 +303,20 @@ case class TripleRush(
     graph.aggregate(new CountVerticesByType)
   }
 
+}
+
+case class DictionaryVertexAdder(dictionary: Dictionary) extends Iterator[GraphEditor[Long, Any] => Unit] {
+  var index = 0
+  
+  def hasNext: Boolean = (index == 0)
+  
+  def next: GraphEditor[Long, Any] => Unit = {
+    assert(index == 0, "Next was called when hasNext is false.")
+    index += 1
+    addDictVert(dictionary, _)
+  }
+  
+  def addDictVert(dictionary: Dictionary, graphEditor: GraphEditor[Long, Any]) {
+    graphEditor.addVertex(new DictionaryVertex(dictionary))
+  }
 }
