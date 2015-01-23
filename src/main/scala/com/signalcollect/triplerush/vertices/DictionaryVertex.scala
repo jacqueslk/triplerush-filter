@@ -8,6 +8,7 @@ import com.signalcollect.triplerush.EfficientIndexPattern.longToIndexPattern
 import com.signalcollect.triplerush.Filter
 import com.signalcollect.triplerush.TrGlobal
 import com.signalcollect.triplerush.TriplePattern
+import com.signalcollect.triplerush.TripleRush
 import com.signalcollect.triplerush.QueryIds
 import com.signalcollect.triplerush.QueryParticle
 import com.signalcollect.triplerush.QueryParticle.arrayToParticle
@@ -28,7 +29,7 @@ import com.signalcollect.triplerush.Constraint
 import com.signalcollect.triplerush.ConditionalOrExpression
 import com.signalcollect.triplerush.GlobalNegative
 
-final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
+final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) {
   
   val filterList = HashMap.empty[Int, Seq[Filter]];
   
@@ -223,7 +224,8 @@ final class DictionaryVertex extends IndexVertex(Long.MaxValue) {
     //println(s"varToValue for $varValue")
     if (varValue > 0) {
       try {
-        TrGlobal.dictionary.get.decode(varValue)
+        tr.dictionary.decode(varValue)
+        //TrGlobal.dictionary.get.decode(varValue)
       } catch {
         case e: IndexOutOfBoundsException =>
           println("No " + varValue + s" in dict")
