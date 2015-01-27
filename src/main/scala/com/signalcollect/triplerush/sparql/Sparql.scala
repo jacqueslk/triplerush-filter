@@ -70,7 +70,6 @@ case class Sparql(
   }
 
   def resultIterator: Iterator[String => String] = {
-    //println(s"Sparql::resultIterator: filters=$filters")
     if (orderBy == None && limit == None) {
       new DecodingIterator(encodedResults)
     } else if (orderBy.isDefined && limit.isDefined) {
@@ -139,7 +138,6 @@ object Sparql {
   def apply(query: String)(implicit tr: TripleRush): Option[Sparql] = {
     val d = tr.dictionary
     val parsed: ParsedSparqlQuery = SparqlParser.parse(query)
-    //println(parsed)
     var containsEntryThatIsNotInDictionary = false
     val prefixes = parsed.prefixes
     val select = parsed.select

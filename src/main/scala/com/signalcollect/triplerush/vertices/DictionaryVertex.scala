@@ -39,12 +39,39 @@ final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) 
   override def foreachChildDelta(f: Int => Unit): Unit = { }
   override def handleChildIdRequest(requestor: Long, graphEditor: GraphEditor[Long, Any]): Unit = { }
 
+  /**
+   * Query particles with added meta data are sent to this method
+   * by the delivery method in IndexVertex.
+   */
   override def processQuery(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
     checkAndForward(query, graphEditor)
   }
   
   /**
-   * Registers & removes filter list for a given query ID
+   * Processes a query particle for all relevant filters and then
+   * forwards it to its next destination if the filters pass
+   * The query particle has added information at the end:
+   *  [query particle] + [new variables that are bound] + [number of newly bounded variables] 
+   *   + [destination as long in two int fields]
+   */
+  def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
+    // Extract meta information at the end of the query particle
+    val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
+    val numberOfNewBindings = query(query.length-3)
+    val newBindings = query.takeRight(numberOfNewBindings+3).dropRight(3)
+    
+    if (checkAllFilters(query, newBindings)) {
+      val filterResponse = query.dropRight(newBindings.length + 3)
+      graphEditor.sendSignal(filterResponse, destination)
+    }
+    else {      
+      val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
+      graphEditor.sendSignal(query.tickets, queryVertexId)
+    }
+  }
+  
+  /**
+   * Registers or removes a filter list for a given query ID
    */
   override def registerFilters(queryId: Int, queryFilters: Seq[Filter], removal: Boolean) {
     if (removal) {
@@ -79,16 +106,13 @@ final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) 
   /**
    * Checks & removes filters with no variables (i.e. filters that
    * can be checked at the beginning) until a no-var filter evaluates
-   * to false => the query has no results
+   * to false, implying that the query doesn't have any results
    */
   private def removeNoVarFilters(queryId: Int): Boolean = {
     var i = 0
     filterList(queryId).foreach { filter =>
-      //println(s"Checking filter #$i for no vars...")
       if (isNoVarFilter(filter)) {
-        //println("Has no variables")
         if (!filter.passes(Map())) {
-          //println(s"Filter #$i did not pass!")
           return false
         }
         removeFilterFromList(queryId, i)
@@ -107,51 +131,29 @@ final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) 
   }
   
   /**
-   * Checks all filters that require information from newly
-   * bound variables
+   * Checks all filters that require information from newly bound variables
+   * @param query The query particle
+   * @param newBindings A list of variable IDs which have been newly bound
    */
   def checkAllFilters(query: Array[Int], newBindings: Array[Int]): Boolean = {
     if (!filterList.contains(query.queryId)) {
-      //println("checkALlFilters: Could not find query ID " + query.queryId + " for " + query.mkString(" "))
       return true
     } 
     if (filterList(query.queryId).length > 0 && filterList(query.queryId)(0).isGlobalFalse) {
-      //println("isGlobalFalse > sending false")
       return false
     }
     var bindingValues = Map[Int, String]()
-    //println(s"DV::Checking $query with $bindingValues")
     for (i <- 0 until filterList(query.queryId).length) {
       val filter = filterList(query.queryId)(i)
       val variableSet = filter.getVariableSet
-      //println(s"Checking filter #$i")
       if (isRelevantFilter(query, newBindings, variableSet)) {
-        //println(s" Filter #$i is relevant")
         bindingValues = addToBindingValues(bindingValues, query, variableSet)
         if (!filter.passes(bindingValues)) {
-          //println(s"  Filter #$i did not pass!")
           return false
         }
       }
     }
     true
-  }
-  
-  /**
-   * Returns a map with new dictionary values that were requested,
-   * along with any other values present in `existingMap`.
-   */
-  def addToBindingValues(
-      existingMap: Map[Int, String],
-      query: Array[Int],
-      required: Set[Int]): Map[Int, String] = {
-    val newMap = scala.collection.mutable.Map[Int, String]()
-    required.foreach {
-      variable => if (!existingMap.get(variable).isDefined) {
-        newMap(variable) = varToValue(query, variable).getOrElse("")
-      }
-    }
-    existingMap ++ newMap.toMap
   }
   
   
@@ -182,35 +184,22 @@ final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) 
   private def containsNewBinding(newBindings: Array[Int], variableSet: Set[Int]): Boolean = {
     variableSet.intersect(newBindings.toSet).size > 0
   }
-
   
   /**
-   * Processes a query particle for all relevant filters and then
-   * forwards it to its next destination if the filters pass
-   * The query particle has added information at the end:
-   *  [query particle] + [new variables that are bound] + [number of newly bounded variables] 
-   *   + [destination as long in two int fields]
+   * Returns a map with new dictionary values that were requested,
+   * along with any other values present in `existingMap`.
    */
-  def checkAndForward(query: Array[Int], graphEditor: GraphEditor[Long, Any]) {
-    //println(s"DictionaryVertex::checkAndForward query=" + query.mkString(" "))
-    
-    val destination = EfficientIndexPattern.embed2IntsInALong(query(query.size-2), query(query.size-1))
-    val numberOfNewBindings = query(query.length-3)
-    val newBindings = query.takeRight(numberOfNewBindings+3).dropRight(3)
-    
-    if (checkAllFilters(query, newBindings)) {
-      val filterResponse = query.dropRight(newBindings.length + 3)
-      graphEditor.sendSignal(filterResponse, destination)
-      
-      val eip = new EfficientIndexPattern(destination).toTriplePattern
-      //println("... Passed filters; sending to " + eip)
+  private def addToBindingValues(
+      existingMap: Map[Int, String],
+      query: Array[Int],
+      required: Set[Int]): Map[Int, String] = {
+    val newMap = scala.collection.mutable.Map[Int, String]()
+    required.foreach {
+      variable => if (!existingMap.get(variable).isDefined) {
+        newMap(variable) = varToValue(query, variable).getOrElse("")
+      }
     }
-    else {      
-      val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-      graphEditor.sendSignal(query.tickets, queryVertexId)
-      
-      //println("... Did not pass filters")
-    }
+    existingMap ++ newMap.toMap
   }
   
   /**
@@ -219,13 +208,11 @@ final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) 
    * @param query The query particle
    * @param index The variable index to get the value for
    */
-  def varToValue(query: Array[Int], index: Int): Option[String] = {
+  private def varToValue(query: Array[Int], index: Int): Option[String] = {
     val varValue = query.getBinding(index)
-    //println(s"varToValue for $varValue")
     if (varValue > 0) {
       try {
         tr.dictionary.decode(varValue)
-        //TrGlobal.dictionary.get.decode(varValue)
       } catch {
         case e: IndexOutOfBoundsException =>
           println("No " + varValue + s" in dict")

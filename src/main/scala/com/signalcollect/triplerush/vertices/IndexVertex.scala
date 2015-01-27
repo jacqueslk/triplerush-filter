@@ -73,7 +73,6 @@ abstract class IndexVertex[State](val id: Long)
    * Default reply, is only overridden by SOIndex.
    */
   def handleCardinalityRequest(c: CardinalityRequest, graphEditor: GraphEditor[Long, Any]) {
-    //println(s"handleCardinalityRequest: answer is $cardinality")
     graphEditor.sendSignal(CardinalityReply(
       c.forPattern, cardinality), c.requestor)
   }
@@ -88,47 +87,26 @@ abstract class IndexVertex[State](val id: Long)
 
 
   override def deliverSignalWithoutSourceId(signal: Any, graphEditor: GraphEditor[Long, Any]) = {
-    // Temp code for output ---------
-//    if (id != DICTIONARY_ID) {
-//      val infoS = expose("Subject")  .toString.replace("http://", "")
-//      val infoP = expose("Predicate").toString.replace("http://", "")
-//      val infoO = expose("Object")   .toString.replace("http://", "")
-//      val infoN = expose("TriplePattern").toString.replaceAll("\\wID=", "")
-//      println(s"\r==== $infoS, $infoP, $infoO | dictionary: $infoN ====")
-//    }
-//    else {
-//      val eip = new EfficientIndexPattern(id).toTriplePattern
-//      println(s"\r==== Dictionary Vertex | " + eip.toString.replace("TriplePattern", "") + " ====")
-//    }
-    // End output code ----------
     
     signal match {
       case query: Array[Int] =>
-        //println("Got query " + query.mkString(" "))
         processQuery(query, graphEditor)
       case fp: FilterPending =>
         import Array.concat
         val idInfo = new EfficientIndexPattern(id) 
         val queryWithMetaInfo = concat(fp.query, fp.newBindings) :+ fp.newBindings.length :+ idInfo.extractFirst :+ idInfo.extractSecond
         graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
-        //println("FP " + fp.query.mkString(" ") + " to " + idInfo.toTriplePattern)
       case fr: FilterRegistration =>
         registerFilters(fr.queryId, fr.filters, fr.removal)
       case cr: CardinalityRequest =>
-//        val eip = new EfficientIndexPattern(cr.requestor).toTriplePattern
-//        println("Cardinality Request: forPattern: " + cr.forPattern + "; requestor: " + eip)
         handleCardinalityRequest(cr, graphEditor)
       case ChildIdRequest(requestor) =>
-//        println("ChildIdRequest: " + requestor)
         handleChildIdRequest(requestor, graphEditor)        
       case cardinalityIncrement: Int =>
-//        println("cardinalityIncrement: " + cardinalityIncrement)
         handleCardinalityIncrement(cardinalityIncrement)
       case count: ObjectCountSignal =>
-//        println("objectCountSignal: " + count)
         handleObjectCount(count)
       case count: SubjectCountSignal =>
-//        println("subjectCountSignal: " + count)
         handleSubjectCount(count)
       case other => throw new Exception(s"Unexpected signal @ $id: $other")
     }

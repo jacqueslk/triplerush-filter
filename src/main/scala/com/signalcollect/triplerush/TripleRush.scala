@@ -70,7 +70,6 @@ case class TripleRush(
   console: Boolean = false) extends QueryEngine {
 
   TrGlobal.dictionary = Some(dictionary)
-  println(s"TripleRush: d=$dictionary")
 
   var canExecute = false
 
@@ -305,6 +304,10 @@ case class TripleRush(
     graph.aggregate(new CountVerticesByType)
   }
   
+  /**
+   * Inner class as iterator to ensure the addition of the dictionary
+   * vertex to node 0 (same node as TripleRush instance)
+   */
   case class DictionaryVertexAdder(tr: TripleRush) extends Iterator[GraphEditor[Long, Any] => Unit] {
     var index = 0
     

@@ -66,11 +66,9 @@ trait Binding
       // Take a shortcut and don't actually do the binding, just send the result count.
       // The isSimpleToBind check excludes complicated cases, where a binding might fail.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
-//      println(s"Send edge count = $edgeCount to query vertex ID")
       graphEditor.sendSignal(edgeCount, queryVertexId)
       graphEditor.sendSignal(query.tickets, queryVertexId)
     } else {
-      //println(s"bindQueryToAllTriples for " + query.mkString(" "))
       val edges = edgeCount
       val totalTickets = query.tickets
       val absoluteValueOfTotalTickets = if (totalTickets < 0) -totalTickets else totalTickets  // inlined math.abs
@@ -80,7 +78,6 @@ trait Binding
       val averageTicketQuery = query.copyWithTickets(avg, complete)
       val aboveAverageTicketQuery = query.copyWithTickets(avg + 1, complete)
       def bind(childDelta: Int) {
-        //println("childDelta = " + childDelta)
         if (extras > 0) {
           extras -= 1
           handleQueryBinding(childDelta, aboveAverageTicketQuery, graphEditor)
@@ -97,12 +94,14 @@ trait Binding
     query: Array[Int],
     graphEditor: GraphEditor[Long, Any]) {
     val boundParticle = bindIndividualQuery(childDelta, query)
-    //println("handleQueryBinding: result = " + boundParticle.mkString(", ") + s"; childDelta = $childDelta")
     if (boundParticle != null) {
-      val newBinds = findNewBindings(query, boundParticle)
-      routeSuccessfullyBound(boundParticle, newBinds, graphEditor)
+      // Potential for improvement: Note that findNewBindings() is called
+      // for every copy of the query particle, rather than once before any
+      // binding action takes place. We are only interested in the variable
+      // IDs that get bound.
+      val newBindings = findNewBindings(query, boundParticle)
+      routeSuccessfullyBound(boundParticle, newBindings, graphEditor)
     } else {
-     // println(s"Could not bind childDelta=$childDelta")
       // Failed to bind, send to query vertex.
       val queryVertexId = QueryIds.embedQueryIdInLong(query.queryId)
       graphEditor.sendSignal(query.tickets, queryVertexId)

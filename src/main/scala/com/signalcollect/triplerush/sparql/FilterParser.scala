@@ -7,20 +7,15 @@ import com.signalcollect.triplerush.PrimaryExpression
 import com.signalcollect.triplerush.BuiltInCall
 import com.signalcollect.triplerush.Var
 import com.signalcollect.triplerush.NumericLiteral
-
 import com.signalcollect.triplerush.MultiplicativeExpression
 import com.signalcollect.triplerush.AdditiveExpression
 import com.signalcollect.triplerush.RelationalExpression
 import com.signalcollect.triplerush.ConditionalAndExpression
-
 import com.signalcollect.triplerush.Constraint
 import com.signalcollect.triplerush.ConditionalOrExpression
-//import com.signalcollect.triplerush.GlobalNegative
 
 case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers {
   val identifier: Parser[String] = "[a-zA-Z0-9]*".r
-  //val integer: Parser[String] = "-?[0-9]+".r
-  //val decimal: Parser[String] = "-?[0-9]*\\.[0-9]+"
   
   def integer: Parser[Int] = "\\-?[0-9]+".r ^^ (_.toInt)
 
@@ -45,8 +40,7 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
   
   val numericLiteral: Parser[NumericLiteral] = {
     double ^^ {
-      //case int: Int =>
-      //  NumericLiteral(int)
+      // We currently treat all numbers as doubles
       case double: Double =>
         NumericLiteral(double)
     }
@@ -72,7 +66,7 @@ case class FilterParser(variableNameToId: Map[String, Int]) extends RegexParsers
   }
   
   // [52] AdditiveExpression ::= MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | NumericLiteralPositive | NumericLiteralNegative )*
-  //! Missing NumericLiteralPositive and -Negative here. !//
+  // Missing NumericLiteralPositive and -Negative here.
   val additiveExpression: Parser[AdditiveExpression] = {
     multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
       case lhs ~ otherValues =>
