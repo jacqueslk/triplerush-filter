@@ -29,7 +29,7 @@ import com.signalcollect.triplerush.Constraint
 import com.signalcollect.triplerush.ConditionalOrExpression
 import com.signalcollect.triplerush.GlobalNegative
 
-final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) {
+final class DictionaryVertex(d: Dictionary) extends IndexVertex(Long.MaxValue) {
   
   val filterList = HashMap.empty[Int, Seq[Filter]];
   
@@ -212,7 +212,7 @@ final class DictionaryVertex(tr: TripleRush) extends IndexVertex(Long.MaxValue) 
     val varValue = query.getBinding(index)
     if (varValue > 0) {
       try {
-        tr.dictionary.decode(varValue)
+        d.decode(varValue)
       } catch {
         case e: IndexOutOfBoundsException =>
           println("No " + varValue + s" in dict")

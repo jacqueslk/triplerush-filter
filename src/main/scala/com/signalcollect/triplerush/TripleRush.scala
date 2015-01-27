@@ -134,7 +134,7 @@ case class TripleRush(
   val system = ActorSystemRegistry.retrieve("SignalCollect").get
   implicit val executionContext = system.dispatcher
   graph.addVertex(new RootIndex)
-  graph.loadGraph(new DictionaryVertexAdder(this), Some(0))
+  graph.loadGraph(new DictionaryVertexAdder(dictionary), Some(0))
   
   var optimizer: Option[Optimizer] = None
 
@@ -276,7 +276,7 @@ case class TripleRush(
     graph.reset
     graph.awaitIdle
     graph.addVertex(new RootIndex)
-    graph.loadGraph(new DictionaryVertexAdder(this), Some(0))
+    graph.loadGraph(new DictionaryVertexAdder(dictionary), Some(0))
   }
 
   def clearCaches {
@@ -308,7 +308,7 @@ case class TripleRush(
    * Inner class as iterator to ensure the addition of the dictionary
    * vertex to node 0 (same node as TripleRush instance)
    */
-  case class DictionaryVertexAdder(tr: TripleRush) extends Iterator[GraphEditor[Long, Any] => Unit] {
+  case class DictionaryVertexAdder(d: Dictionary) extends Iterator[GraphEditor[Long, Any] => Unit] {
     var index = 0
     
     def hasNext: Boolean = (index == 0)
@@ -320,7 +320,7 @@ case class TripleRush(
     }
     
     def addDictVert(graphEditor: GraphEditor[Long, Any]) {
-      graphEditor.addVertex(new DictionaryVertex(tr))
+      graphEditor.addVertex(new DictionaryVertex(d))
     }
   }
 
