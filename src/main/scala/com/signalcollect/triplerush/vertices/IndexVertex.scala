@@ -92,10 +92,7 @@ abstract class IndexVertex[State](val id: Long)
       case query: Array[Int] =>
         processQuery(query, graphEditor)
       case fp: FilterPending =>
-        import Array.concat
-        val idInfo = new EfficientIndexPattern(id) 
-        val queryWithMetaInfo = concat(fp.query, fp.newBindings) :+ fp.newBindings.length :+ idInfo.extractFirst :+ idInfo.extractSecond
-        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+        graphEditor.sendSignal(fp.queryWithMetaInfo, DICTIONARY_ID)
       case fr: FilterRegistration =>
         registerFilters(fr.queryId, fr.filters, fr.removal)
       case cr: CardinalityRequest =>

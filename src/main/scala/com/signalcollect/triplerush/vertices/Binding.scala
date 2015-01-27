@@ -130,17 +130,22 @@ trait Binding
       if (newBindings.length == 0 || !boundParticle.isBindingQuery) {
         graphEditor.sendSignal(boundParticle, destination)
       }
-      else if (boundParticle.isResult) {
-        // Immediately send query to dictionary vertex if it is to be sent back to the query vertex;
-        // we can avoid modifying the query vertices thanks to this
+      else {
+        // Need to consult dictionary vertex -- add meta info (new bindings + destination
+        // after filter check) to the end of the query particle
         import Array.concat
         val queryWithMetaInfo = concat(boundParticle, newBindings.toArray) :+ newBindings.length :+ destination.extractFirst :+ destination.extractSecond
-        graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
-      }
-      else {
-        // If not root, send signal to the vertex first, which will then check with the 
-        // dictionary vertex. This way, no filters are checked for vertices that don't exist.
-        graphEditor.sendSignal(new FilterPending(boundParticle, newBindings.toArray), destination)
+        
+        if (boundParticle.isResult) {
+          // Send query particle to dictionary vertex immediately if it is destined for the
+          // query vertex; we know it exists + we avoid modifying query vertex code 
+          graphEditor.sendSignal(queryWithMetaInfo, DICTIONARY_ID)
+        }
+        else {
+          // Not going to query vertex: send to destination first to ensure that the next
+          // destination exists. This way, no filters are checked for inexistent vertices.
+          graphEditor.sendSignal(new FilterPending(queryWithMetaInfo), destination)
+        }
       }
     }
   }
